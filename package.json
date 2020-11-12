@@ -3,7 +3,20 @@
   "version": "1.0.0",
   "description": "Server to CRURD a configuration file ",
   "main": "index.js",
+  "scripts": {
+    "start": "NODE_ENV=production node index.js",
+    "start:dev": "NODE_ENV=development nodemon index.js",
+    "test": "jest"
+  },
   "repository": "https://github.com/vanducvo/configuration-file-server.git",
   "author": "Van Duc Vo",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^26.0.15",
+    "jest": "^26.6.3",
+    "nodemon": "^2.0.6"
+  },
+  "dependencies": {
+    "dotenv": "^8.2.0"
+  }
 }
