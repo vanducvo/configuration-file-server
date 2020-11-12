@@ -1,0 +1,9 @@
+{
+  "name": "configuration-file-server",
+  "version": "1.0.0",
+  "description": "Server to CRURD a configuration file ",
+  "main": "index.js",
+  "repository": "https://github.com/vanducvo/configuration-file-server.git",
+  "author": "Van Duc Vo",
+  "license": "MIT"
+}
