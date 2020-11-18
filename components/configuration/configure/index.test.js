@@ -1,6 +1,6 @@
 const Configure = require('./index.js');
 
-describe('Configure Components', () => {
+describe('Configure Class', () => {
   const info = {
     name: 'Sudoers',
     age: 30
