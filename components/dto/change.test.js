@@ -1,4 +1,4 @@
-const Change = require('./index.js');
+const Change = require('./change.js');
 
 describe('Change Class', () => {
   const path = 'user.name';

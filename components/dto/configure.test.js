@@ -1,4 +1,4 @@
-const Configure = require('./index.js');
+const Configure = require('./configure.js');
 
 describe('Configure Class', () => {
   const info = {
