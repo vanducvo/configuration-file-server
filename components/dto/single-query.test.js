@@ -1,4 +1,4 @@
-const SingleQuery = require('./index.js');
+const SingleQuery = require('./single-query.js');
 
 describe('Single Query Class', () => {
   const path = 'user.name';
