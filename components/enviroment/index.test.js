@@ -9,7 +9,7 @@ describe('Enviroment Components', () => {
     expect(typeof env.getStrategy()).toBe('string');
   });
 
-  it('should have strategy configure in production Enviroment', () => {
+  it('should have strategy configure in development Enviroment', () => {
     const env = new Enviroment(EnviromentType.DEVELOPMENT);
     expect(typeof env.getStrategy()).toBe('string');
   });
