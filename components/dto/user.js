@@ -1,32 +1,38 @@
 class User {
   constructor(id, username) {
-    this.id = id;
-    this.username = username;
-    this.password = null;
+    this._id = id;
+    this._username = username;
+    this._password = null;
   }
 
   getId() {
-    return this.id;
+    return this._id;
   }
 
   setId(id) {
-    this.id = id;
+    this._id = id;
   }
 
   getUsername() {
-    return this.username;
+    return this._username;
   }
 
   setUsername(username) {
-    this.username = username;
+    this._username = username;
   }
 
   getPassword() {
-    return this.password;
+    return this._password;
   }
 
   setPassword(password) {
-    this.password = password;
+    this._password = password;
+  }
+
+  clone(){
+    const copy = new User(this._id, this._username);
+    copy.setPassword(this._password);
+    return copy;
   }
 }
 
