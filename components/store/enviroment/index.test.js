@@ -1,16 +1,45 @@
 const {
   Enviroment,
-  EnviromentType
+  StoreType
 } = require('./index.js');
 
 describe('Enviroment Components', () => {
-  it('should have strategy configure in production Enviroment', () => {
-    const env = new Enviroment(EnviromentType.PRODUCTION);
-    expect(typeof env.getStrategy()).toBe('string');
+
+  const OLD_ENV = process.env;
+
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...OLD_ENV };
   });
 
-  it('should have strategy configure in development Enviroment', () => {
-    const env = new Enviroment(EnviromentType.DEVELOPMENT);
-    expect(typeof env.getStrategy()).toBe('string');
+  afterAll(() => {
+    process.env = OLD_ENV;
+  });
+
+  it('should have get store type', () => {
+    process.env.STORE_TYPE = StoreType.FILE;
+  
+    const storeType = Enviroment.getStoreType();
+
+    expect(storeType).toEqual(StoreType.FILE);
+  });
+
+  it('should have get file path (valid)', () => {
+    process.env.STORE_TYPE = StoreType.FILE;
+    const path = '/root';
+    process.env.FILE_PATH = path;
+
+    const storeType = Enviroment.getFilePath();
+
+    expect(storeType).toEqual(path);
+  });
+
+  it('should have get file path (invalid)', () => {
+    process.env.STORE_TYPE = StoreType.MYSQL;
+    const path = '/root';
+    process.env.FILE_PATH = path;
+
+
+    expect(() => Enviroment.getFilePath()).toThrowError();
   });
 });
