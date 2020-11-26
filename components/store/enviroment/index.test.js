@@ -1,11 +1,12 @@
 const {
   Enviroment,
-  StoreType
+  StoreTypes
 } = require('./index.js');
 
 describe('Enviroment Components', () => {
 
   const OLD_ENV = process.env;
+  const path = '/root';
 
   beforeEach(() => {
     jest.resetModules();
@@ -16,18 +17,30 @@ describe('Enviroment Components', () => {
     process.env = OLD_ENV;
   });
 
-  it('should have get store type', () => {
-    process.env.STORE_TYPE = StoreType.FILE;
-  
-    const storeType = Enviroment.getStoreType();
+  it('Get store type (valid)', () => {
 
-    expect(storeType).toEqual(StoreType.FILE);
+    for(let type of StoreTypes.getAllStoreType()){
+      setEnviromentStoreType(StoreTypes[type]);
+  
+      const storeType = Enviroment.getStoreType();
+  
+      expect(storeType).toEqual(StoreTypes[type]);
+    }
+
   });
 
+  it('Get store type (invalid)', () => {
+    setEnviromentStoreType("postgres");
+
+    expect(() => Enviroment.getStoreType()).toThrowError();
+  });
+
+
+
   it('should have get file path (valid)', () => {
-    process.env.STORE_TYPE = StoreType.FILE;
-    const path = '/root';
-    process.env.FILE_PATH = path;
+    setEnviromentStoreType(StoreTypes.FILE);
+    
+    setEnviromentFilePath(path);
 
     const storeType = Enviroment.getFilePath();
 
@@ -35,11 +48,18 @@ describe('Enviroment Components', () => {
   });
 
   it('should have get file path (invalid)', () => {
-    process.env.STORE_TYPE = StoreType.MYSQL;
-    const path = '/root';
-    process.env.FILE_PATH = path;
+    setEnviromentStoreType(StoreTypes.MYSQL);
 
+    setEnviromentFilePath(path);
 
     expect(() => Enviroment.getFilePath()).toThrowError();
   });
 });
+
+function setEnviromentFilePath(path) {
+  process.env.FILE_PATH = path;
+}
+
+function setEnviromentStoreType(type) {
+  process.env.STORE_TYPE = type;
+}
