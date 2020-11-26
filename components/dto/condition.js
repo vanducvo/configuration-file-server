@@ -1,4 +1,4 @@
-class SingleQuery {
+class Condition {
   constructor(query){
     this._query = query;
 
@@ -13,4 +13,4 @@ class SingleQuery {
   }
 }
 
-module.exports = SingleQuery;
+module.exports = Condition;

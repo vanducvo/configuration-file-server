@@ -1,23 +1,34 @@
 const fs = require('fs');
 
 const FileStrategy = require('./file-strategy.js');
+const Condition = require('../../dto/condition');
 
-const configurationNotHaveFile = {
+const settingNotHaveFile = {
   username: 'tester-no-exists',
   configuration: [
 
   ]
 };
 
-const configurationHaveFile = {
+const settingHaveFile = {
   username: 'tester-exists',
   configuration: [
     {
-      id: 0
+      id: 0,
+      capacity: 10
     },
     {
-      id: 1
-    }
+      id: 1,
+      capacity: 5
+    },
+    {
+      id: 2,
+      capacity: 6
+    },
+    {
+      id: 3,
+      capacity: 7
+    },
   ]
 };
 
@@ -30,13 +41,14 @@ describe('File Strategy Test', () => {
     }
 
     const content = {
-      length: 2,
-      data: configurationHaveFile.configuration
+      length: settingHaveFile.configuration.length,
+      lastIndex: settingHaveFile.configuration.length,
+      data: settingHaveFile.configuration
     };
 
     createFile(
       path,
-      configurationHaveFile.username,
+      settingHaveFile.username,
       content
     );
   });
@@ -56,10 +68,10 @@ describe('File Strategy Test', () => {
 
   it('should check user does not have a configuration file', () => {
     const fileStrategy = new FileStrategy(path);
-    const configuration = { ...configurationNotHaveFile }
+    const setting = { ...settingNotHaveFile }
 
     const wasExisted = fileStrategy.wasExistedConfigurationFile(
-      FileStrategy.getFileName(configuration.username)
+      FileStrategy.getFileName(setting.username)
     );
 
     expect(wasExisted).toBeFalsy();
@@ -67,53 +79,102 @@ describe('File Strategy Test', () => {
 
   it('should check user have a configuration file', () => {
     const fileStrategy = new FileStrategy(path);
-    const configuration = { ...configurationHaveFile };
+    const setting = { ...settingHaveFile };
 
     const wasExisted = fileStrategy.wasExistedConfigurationFile(
-      FileStrategy.getFileName(configuration.username)
+      FileStrategy.getFileName(setting.username)
     );
 
     expect(wasExisted).toBeTruthy();
   });
 
   describe('getNumberOfAllConfigurations', () => {
-    it('should be 0  configurations when doest not exists file', async () => {
-      const fileStrategy = new FileStrategy(path);
-      const configuration = { ...configurationNotHaveFile }
-
-      const n = await fileStrategy.getNumberOfAllConfigurations(
-        configuration.username
-      );
-
-      expect(n).toEqual(0);
-    })
-  });
-
-  describe('getNumberOfAllConfigurations', () => {
+    const fileStrategy = new FileStrategy(path);
     it('should be 0 configurations when doest not exists file', async () => {
-      const fileStrategy = new FileStrategy(path);
-      const configuration = { ...configurationNotHaveFile }
+      const setting = { ...settingNotHaveFile }
 
       const n = await fileStrategy.getNumberOfAllConfigurations(
-        configuration.username
+        setting.username
       );
 
       expect(n).toEqual(0);
     });
 
     it('should be Number Of All Configurations', async () => {
-      const fileStrategy = new FileStrategy(path);
-      const configuration = { ...configurationHaveFile }
+      const setting = { ...settingHaveFile }
 
       const n = await fileStrategy.getNumberOfAllConfigurations(
-        configuration.username
+        setting.username
       );
 
-      expect(n).toEqual(configuration.configuration.length);
+      expect(n).toEqual(setting.configuration.length);
+    });
+  });
+
+  describe('select', () => {
+    const fileStrategy = new FileStrategy(path);
+    const setting = { ...settingHaveFile }
+
+    it('shoud get with single - operator: ==', async () => {
+      await expectSelect(fileStrategy, setting, 'id == 2');
+    });
+
+    it('shoud get with single - operator: !=', async () => {
+      await expectSelect(fileStrategy, setting, 'id != 2');
+    });
+
+    it('shoud get with single - operator: <', async () => {
+      await expectSelect(fileStrategy, setting, 'id < 2');
+    });
+
+    it('shoud get with single - operator: >', async () => {
+      await expectSelect(fileStrategy, setting, 'id > 0');
+    });
+
+    it('shoud get with single - operator: <=', async () => {
+      await expectSelect(fileStrategy, setting, 'id <= 2');
+    });
+
+    it('shoud get with single - operator: >=', async () => {
+      await expectSelect(fileStrategy, setting, 'id >= 2');
+    });
+
+    it('should get with multi - operator: and', async () => {
+      await expectSelect(fileStrategy, setting, 'id >= 1 && capacity < 6');
+    });
+
+    it('should get with multi - operator: or', async () => {
+      await expectSelect(fileStrategy, setting, 'id >= 1 || capacity < 6');
+    });
+
+    it('should get with multi - operator: complex with ( )', async () => {
+      await expectSelect(fileStrategy, setting, '(id >= 1 && capacity < 6) || capacity >= 10');
+    });
+
+    it('should return [] with invalid query', async () => {
+      await expectSelect(fileStrategy, setting, 'k.x > 10');
     });
   });
 
 });
+
+async function expectSelect(fileStrategy, setting, query) {
+  const condition = new Condition(query);
+
+  const configurations = await fileStrategy.select(condition, setting.username);
+
+
+  const evaluateCondition = ({ id, capacity }) => {
+    try {
+      return eval(query);
+    } catch (e) {
+      return false;
+    }
+  };
+  const n = setting.configuration.filter(evaluateCondition);
+
+  expect(configurations).toEqual(n);
+}
 
 function createFile(path, name, data) {
   fs.writeFileSync(`${path}/${name}-configurations.json`, JSON.stringify(data));

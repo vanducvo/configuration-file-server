@@ -5,7 +5,7 @@ class StrategyStore {
   insert(configuration) {
     throw new Error('Method Not Implmentent!');
   }
-  update(assignments) {
+  update(assignments, condition) {
     throw new Error('Method Not Implmentent!');
   }
   delete(condition) {
