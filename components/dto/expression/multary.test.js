@@ -1,5 +1,8 @@
+const Binary = require('./binary');
 const Expression = require('./expression');
+const Literal = require('./literal');
 const Multary = require('./multary.js');
+const Unary = require('./unary');
 
 describe('Multary', () => {
   it('Should be sucess get all valid operands of multary', () => {
@@ -23,5 +26,44 @@ describe('Multary', () => {
 
   it('should be error generate invalid multary expression', () => {
     expect(() => new Multary('!')).toThrowError('Invalid multary "operator"');
+  });
+
+  describe('should evaluate', () => {
+    it('AND - true', () => {
+      const expression = new Multary(Multary.AND, [
+        new Literal(true), 
+        new Unary(Unary.NOT, new Literal(false)),
+        new Binary(Binary.GREATHAN, new Literal(3), new Literal(2))
+      ])
+      expect(expression.evaluate({})).toBeTruthy();
+    });
+
+    it('AND - false', () => {
+      const expression = new Multary(Multary.AND, [
+        new Literal(true), 
+        new Binary(Binary.GREATHAN, new Literal(1), new Literal(2)),
+        new Unary(Unary.NOT, new Literal(false)),
+      ])
+      expect(expression.evaluate({})).toBeFalsy();
+    });
+
+    it('OR - true', () => {
+      const expression = new Multary(Multary.OR, [
+        new Literal(false), 
+        new Binary(Binary.GREATHAN, new Literal(3), new Literal(2)),
+        new Unary(Unary.NOT, new Literal(true)),
+      ])
+      expect(expression.evaluate({})).toBeTruthy();
+    });
+
+    it('OR - false', () => {
+      const expression = new Multary(Multary.OR, [
+        new Literal(false), 
+        new Unary(Unary.NOT, new Literal(true)),
+        new Binary(Binary.GREATHAN, new Literal(1), new Literal(2))
+      ])
+      expect(expression.evaluate({})).toBeFalsy();
+    });
+    
   });
 });
