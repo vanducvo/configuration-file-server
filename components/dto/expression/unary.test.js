@@ -24,7 +24,8 @@ describe('Unary', () => {
   });
 
   it('should be error generate invalid operator', () => {
-    expect(() => new Unary('*', new Literal(0))).toThrowError('Invalid unary "operator"');
+    const message = 'Invalid unary "operator"';
+    expect(() => new Unary('*', new Literal(0))).toThrowError(message);
   });
 
   it('should be error generate invalid operand', () => {
@@ -99,7 +100,7 @@ describe('Unary', () => {
 
     it('should evalue for Binary - Mock', () => {
       const context = {};
-      const binary = new Binary(Binary.GREATHAN, 1, 2);
+      const binary = new Binary(Binary.GREATHAN, new Literal(1), new Literal(2));
       const spy = jest.spyOn(binary, 'evaluate').mockImplementation(() => false);
       const expression = new Unary(Unary.NOT, binary);
 
@@ -110,7 +111,7 @@ describe('Unary', () => {
 
     it('should evalue for Mutaly - Mock', () => {
       const context = {};
-      const multary = new Multary(Multary.OR, [true, false]);
+      const multary = new Multary(Multary.OR, [new Literal(true), new Literal(false)]);
       const spy = jest.spyOn(multary, 'evaluate').mockImplementation(() => false);
       const expression = new Unary(Unary.NOT, multary);
 

@@ -18,12 +18,26 @@ describe('Binary', () => {
     for (let operator of operators) {
       const type = Binary[operator];
 
-      expect(new Binary(type)).toBeInstanceOf(Binary);
+      expect(new Binary(type, new Literal(1), new Literal(2))).toBeInstanceOf(Binary);
     }
   });
 
   it('should be error generate invalid binary expression', () => {
-    expect(() => new Binary('!')).toThrowError('Invalid binary "operator"');
+    const message = 'Invalid binary "operator"';
+    expect(() => new Binary('!')).toThrowError(message);
+  });
+
+  it('should be error generate invalid operand', () => {
+    const message = 'Invalid operand, must be instance of Expression';
+    expect(() => new Binary(
+      Binary.GREATHAN, 1,
+      new Literal(1))
+    ).toThrowError(message);
+
+    expect(() => new Binary(
+      Binary.GREATHAN,
+      new Literal(1), 1)
+    ).toThrowError(message);
   });
 
   it('should evaluate', () => {

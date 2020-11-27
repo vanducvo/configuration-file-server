@@ -12,16 +12,30 @@ class Multary extends Expression {
       throw new Error('Invalid multary "operator"');
     }
 
+    if (this._isOperandInvalid(operands)) {
+      throw new Error('Invalid operand, must be instance of Expression');
+    }
+
     this._operator = operator;
     this._operands = operands;
   }
 
+  _isOperandInvalid(operands) {
+    for (let operand of operands) {
+      if (!(operand instanceof Expression)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   _evaluateAND(context) {
     let result = true;
-    for(let operand of this._operands){
+    for (let operand of this._operands) {
       result = result && operand.evaluate(context);
 
-      if(result === false){
+      if (result === false) {
         return false;
       }
     }
@@ -31,10 +45,10 @@ class Multary extends Expression {
 
   _evaluateOR(context) {
     let result = false;
-    for(let operand of this._operands){
+    for (let operand of this._operands) {
       result = result || operand.evaluate(context);
 
-      if(result === true){
+      if (result === true) {
         return true;
       }
     }

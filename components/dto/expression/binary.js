@@ -14,12 +14,22 @@ class Binary extends Expression {
     }
 
     super();
+
+    if (this._isOperandInvalid(leftOperand, rightOperand)) {
+      throw new Error('Invalid operand, must be instance of Expression');
+    }
+
     this._operator = operator;
     this._leftOperand = leftOperand;
     this._rightOperand = rightOperand;
   }
 
-  evaluate(context){
+  _isOperandInvalid(leftOperand, rightOperand) {
+    return !(leftOperand instanceof Expression)
+      || !(rightOperand instanceof Expression);
+  }
+
+  evaluate(context) {
     const left = this._leftOperand.evaluate(context);
     const right = this._rightOperand.evaluate(context);
 
