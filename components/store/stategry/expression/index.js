@@ -4,6 +4,7 @@ const Binary = require('./binary.js');
 const Multary = require('./multary.js');
 const Id = require('./id.js');
 const Literal = require('./literal.js')
+const { parseFromJSON } = require('./utils');
 
 module.exports = {
   Expression,
@@ -11,5 +12,6 @@ module.exports = {
   Binary,
   Multary,
   Id,
-  Literal
+  Literal,
+  parseFromJSON
 };

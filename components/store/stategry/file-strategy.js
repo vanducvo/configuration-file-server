@@ -7,6 +7,7 @@ const StrategyStore = require('./strategy-store.js');
 const Enviroment = require('../enviroment/index');
 
 const readFile = util.promisify(fs.readFile);
+const Expression = require('./expression');
 
 class FileStrategy extends StrategyStore {
 
@@ -15,8 +16,8 @@ class FileStrategy extends StrategyStore {
     this._path = path;
   }
 
-  static getFileName(username) {
-    return username + '-configurations.json';
+  static getFileName(userId) {
+    return userId + '-configurations.json';
   }
 
   wasExistedConfigurationFile(filename) {
@@ -28,8 +29,8 @@ class FileStrategy extends StrategyStore {
     return path.join(this._path, filename);
   }
 
-  async getNumberOfAllConfigurations(username) {
-    const filename = FileStrategy.getFileName(username);
+  async getNumberOfAllConfigurations(userId) {
+    const filename = FileStrategy.getFileName(userId);
 
     if (!this.wasExistedConfigurationFile(filename)) {
       return 0;
@@ -50,42 +51,41 @@ class FileStrategy extends StrategyStore {
   }
 
   bufferToJSON(buffer) {
-    return JSON.parse(buffer.toString());
+    return v8.deserialize(buffer);
   }
 
-  async select(condition, username) {
-    const query = condition.getQuery();
-    const fileName = FileStrategy.getFileName(username);
-    const configurations = await this.getAllConfigurations(fileName);
+
+  async select(condition) {
+    const {userId, ...subCondition} = condition;
+    if(!userId){
+      throw new Error('Must have userId constraint!');
+    }
+
+    const filename = FileStrategy.getFileName(userId);
+    const configurations = await this.getAllConfigurations(filename);
 
     let results = [];
     for (let child of configurations.data) {
-      let match = this.evaluateConfigurationWithQuery(child, query)
-      if (match) {
-        results.push(child);
+      let expression = Expression.parseFromJSON(subCondition)
+
+      try {
+        const isMatch = expression.evaluate(child);
+        if (isMatch) {
+          results.push(child);
+        }
+      }catch(exception){
+        // Logger Need To Here
       }
+
     }
 
     return results;
   }
 
-  evaluateConfigurationWithQuery(configuration, query) {
-    const queryRegex = /(?<id>\w+)\s*(?<op>(=|<|>|!)(=)?)\s*(?<value>[\w"]+)/g;
-    query = query.replaceAll(queryRegex, 'configuration.$<id>$<op>$<value>');
-
-    let isMatch = false;
-    try {
-      isMatch = eval(query);
-    } catch (e) {
-      isMatch = false;
-    }
-
-    return isMatch;
-  }
-
-  insert(configuration) {
-    if (!this.wasExistedConfigurationFile(configuration)) {
-      throw new Error('Method Not Implmentent!');
+  async insert(configuration) {
+    const {userId, ...subConfiguration} = configuration;
+    if(!userId){
+      throw new Error('Must have userId constraint!');
     }
   }
 
