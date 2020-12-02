@@ -23,6 +23,10 @@ class Expression {
     }
   }
 
+  static isInvalidName(name) {
+    return typeof (name) !== 'string' || !/^\w[\w\.]*\w$/.test(name);
+  }
+
   evaluate(context) { };
 }
 
