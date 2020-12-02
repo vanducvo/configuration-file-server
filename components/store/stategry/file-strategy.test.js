@@ -42,12 +42,18 @@ const settingHaveFile = {
   ]
 };
 
+
 describe('File Strategy Test', () => {
   const pathOfDataStore = process.cwd() + '/file-db';
-
+  const storeToTestInsert = pathOfDataStore + '/3-configurations.json';
+  
   beforeAll(() => {
     if (!fs.existsSync(pathOfDataStore)) {
       fs.mkdirSync(pathOfDataStore);
+    }
+
+    if (fs.existsSync(storeToTestInsert)) {
+      fs.unlinkSync(storeToTestInsert);
     }
 
     const content = {
@@ -190,6 +196,31 @@ describe('File Strategy Test', () => {
       };
 
       await expect(fileStrategy.select(condition)).rejects.toThrowError();
+    });
+  });
+
+  describe('insert', () => {
+    const fileStrategy = new FileStrategy(pathOfDataStore);
+    const setting = { ...settingHaveFile }
+    
+    it('should throw error if not have userId', async () => {
+      await expect(fileStrategy.insert({age: 10})).rejects.toThrowError();
+    });
+
+    it('should throw error if not have configuration exepect userId', async() => {
+      await expect(fileStrategy.insert({userId: 10})).rejects.toThrowError();
+    });
+
+    it('should append into file configuration - if file does not exits' , async() => {
+      const fileStrategy = new FileStrategy(pathOfDataStore);
+
+      const configuration = { userId: 3, name: 'sudo', age: 12 };
+      await fileStrategy.insert(configuration);
+
+      const configurationStored = await fileStrategy.select({userId: 3, eq: ['id', 0]});
+
+      expect(configurationStored[0].name).toEqual(configuration.name);
+      expect(configurationStored[0].age).toEqual(configuration.age);
     });
   });
 });

@@ -7,6 +7,7 @@ const StrategyStore = require('./strategy-store.js');
 const Enviroment = require('../enviroment/index');
 
 const readFile = util.promisify(fs.readFile);
+const writeFile = util.promisify(fs.writeFile);
 const Expression = require('./expression');
 
 class FileStrategy extends StrategyStore {
@@ -84,9 +85,36 @@ class FileStrategy extends StrategyStore {
 
   async insert(configuration) {
     const {userId, ...subConfiguration} = configuration;
-    if(!userId){
-      throw new Error('Must have userId constraint!');
+    if(!FileStrategy.isValidConfiguration(configuration)){
+      throw new Error('Must have userId and least one property!');
     }
+
+    const filename = FileStrategy.getFileName(userId);
+    
+    let configurations = null;
+    if(!this.wasExistedConfigurationFile(filename)){
+      configurations = FileStrategy.makeConfigurationsDedault();
+    }
+
+    configurations.data.push({id: configurations.lastIndex, ...subConfiguration});
+
+    configurations.lastIndex++;
+    configurations.length++;
+
+    await writeFile(this.getFilePath(filename), v8.serialize(configurations));
+  }
+
+  static makeConfigurationsDedault() {
+    return {
+      length: 0,
+      lastIndex: 0,
+      data: []
+    };
+  }
+
+  static isValidConfiguration(configuration) {
+    const properties = Object.getOwnPropertyNames(configuration);
+    return properties.includes('userId') && properties.length > 1;
   }
 
   update(assignments, condition) {
