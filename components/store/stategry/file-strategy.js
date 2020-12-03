@@ -46,12 +46,12 @@ class FileStrategy extends StrategyStore {
     const filePath = this.getFilePath(filename);
     const buffer = await readFile(filePath);
 
-    const configurations = this.bufferToJSON(buffer);
+    const configurations = FileStrategy.decode(buffer);
 
     return configurations;
   }
 
-  bufferToJSON(buffer) {
+  static decode(buffer) {
     return v8.deserialize(buffer);
   }
 
@@ -93,7 +93,9 @@ class FileStrategy extends StrategyStore {
     const filename = FileStrategy.getFileName(userId);
     
     let store = null;
-    if(!this.wasExistedStore(filename)){
+    if(this.wasExistedStore(filename)){
+      store = await this.getStore(filename);
+    } else {
       store = FileStrategy.makeStoreDefault();
     }
 

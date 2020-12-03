@@ -44,16 +44,22 @@ const settingHaveFile = {
 
 
 describe('File Strategy Test', () => {
-  const pathOfDataStore = process.cwd() + '/file-db';
-  const storeToTestInsert = pathOfDataStore + '/3-configurations.json';
-  
+  const root = process.cwd() + '/file-db';
+  const storeToTestNotExists = root + '/0-configurations.json';
+  const userIdNotYetStore = 3;
+  const storeToTestInsert = root + `/${userIdNotYetStore}-configurations.json`;
+
   beforeAll(() => {
-    if (!fs.existsSync(pathOfDataStore)) {
-      fs.mkdirSync(pathOfDataStore);
+    if (!fs.existsSync(root)) {
+      fs.mkdirSync(root);
     }
 
     if (fs.existsSync(storeToTestInsert)) {
       fs.unlinkSync(storeToTestInsert);
+    }
+
+    if (fs.existsSync(storeToTestNotExists)) {
+      fs.unlinkSync(storeToTestNotExists);
     }
 
     const content = {
@@ -63,14 +69,14 @@ describe('File Strategy Test', () => {
     };
 
     createFile(
-      pathOfDataStore,
+      root,
       settingHaveFile.userId,
       content
     );
   });
 
   it('should have constructor with path argument', () => {
-    const fileStrategy = new FileStrategy(pathOfDataStore);
+    const fileStrategy = new FileStrategy(root);
 
     expect(fileStrategy).toBeInstanceOf(FileStrategy);
   });
@@ -83,7 +89,7 @@ describe('File Strategy Test', () => {
   });
 
   it('should check user does not have a configuration file', () => {
-    const fileStrategy = new FileStrategy(pathOfDataStore);
+    const fileStrategy = new FileStrategy(root);
     const setting = { ...settingNotHaveFile }
 
     const wasExisted = fileStrategy.wasExistedStore(
@@ -94,7 +100,7 @@ describe('File Strategy Test', () => {
   });
 
   it('should check user have a configuration file', () => {
-    const fileStrategy = new FileStrategy(pathOfDataStore);
+    const fileStrategy = new FileStrategy(root);
     const setting = { ...settingHaveFile };
 
     const wasExisted = fileStrategy.wasExistedStore(
@@ -105,7 +111,7 @@ describe('File Strategy Test', () => {
   });
 
   describe('getNumberOfAllConfigurations', () => {
-    const fileStrategy = new FileStrategy(pathOfDataStore);
+    const fileStrategy = new FileStrategy(root);
     it('should be 0 configurations when doest not exists file', async () => {
       const setting = { ...settingNotHaveFile }
 
@@ -128,7 +134,7 @@ describe('File Strategy Test', () => {
   });
 
   describe('select', () => {
-    const fileStrategy = new FileStrategy(pathOfDataStore);
+    const fileStrategy = new FileStrategy(root);
     const setting = { ...settingHaveFile }
 
     it(`shoud get with binary - operator: ${Expression.getOperators(Binary)}`, async () => {
@@ -200,30 +206,64 @@ describe('File Strategy Test', () => {
   });
 
   describe('insert', () => {
-    const fileStrategy = new FileStrategy(pathOfDataStore);
-    const setting = { ...settingHaveFile }
-    
+    const fileStrategy = new FileStrategy(root);
+
     it('should throw error if not have userId', async () => {
-      await expect(fileStrategy.insert({age: 10})).rejects.toThrowError();
+      await expect(fileStrategy.insert({ age: 10 })).rejects.toThrowError();
     });
 
-    it('should throw error if not have configuration exepect userId', async() => {
-      await expect(fileStrategy.insert({userId: 10})).rejects.toThrowError();
+    it('should throw error if not have configuration exepect userId', async () => {
+      await expect(fileStrategy.insert({ userId: 10 })).rejects.toThrowError();
     });
 
-    it('should append into file configuration - if file does not exits' , async() => {
-      const fileStrategy = new FileStrategy(pathOfDataStore);
+    it('should append into file configuration - if file does not exits', async () => {
+      const setting = { userId: userIdNotYetStore };
 
-      const configuration = { userId: 3, name: 'sudo', age: 12 };
-      await fileStrategy.insert(configuration);
+      const timeNow = Date.now();
+      const configuration = { userId: setting.userId, time: timeNow };
 
-      const configurationStored = await fileStrategy.select({userId: 3, eq: ['id', 0]});
+      await expectInsert(fileStrategy, configuration);
+    });
 
-      expect(configurationStored[0].name).toEqual(configuration.name);
-      expect(configurationStored[0].age).toEqual(configuration.age);
+    it('should append into file configuration - if file exsits', async () => {
+      const setting = { ...settingHaveFile };
+
+      const now = Date.now();
+      const configuration = {
+        userId: setting.userId,
+        time: now,
+        isDelete: false
+      };
+
+      expectInsert(fileStrategy, configuration);
     });
   });
 });
+
+async function expectInsert(fileStrategy, configuration) {
+  const times = 5;
+  for (let i = 0; i < times; i++) {
+    await fileStrategy.insert(configuration);
+  }
+
+  const condition = {
+    userId: configuration.userId,
+    eq: ['time', configuration.time]
+  };
+  const expectConfigurations = await fileStrategy.select(condition);
+
+  expect(expectConfigurations).toHaveLength(times);
+
+  for (let i = 0; i < times - 1; i++) {
+    expect(expectConfigurations[i].id).toEqual(expectConfigurations[i + 1].id - 1);
+    expectConfiguration(expectConfigurations[i], configuration);
+    expectConfiguration(expectConfigurations[i + 1], configuration);
+  }
+}
+
+function expectConfiguration(expectConfiguration, { userId, ...configuration }) {
+  expect(expectConfiguration).toMatchObject(configuration);
+}
 
 function createFile(path, name, data) {
   fs.writeFileSync(`${path}/${name}-configurations.json`, v8.serialize(data));
