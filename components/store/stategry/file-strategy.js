@@ -21,7 +21,7 @@ class FileStrategy extends StrategyStore {
     return userId + '-configurations.json';
   }
 
-  wasExistedConfigurationFile(filename) {
+  wasExistedStore(filename) {
     const filePath = this.getFilePath(filename);
     return fs.existsSync(filePath);
   }
@@ -33,16 +33,16 @@ class FileStrategy extends StrategyStore {
   async getNumberOfAllConfigurations(userId) {
     const filename = FileStrategy.getFileName(userId);
 
-    if (!this.wasExistedConfigurationFile(filename)) {
+    if (!this.wasExistedStore(filename)) {
       return 0;
     }
 
-    const configurations = await this.getAllConfigurations(filename);
+    const store = await this.getStore(filename);
 
-    return configurations.length;
+    return store.length;
   }
 
-  async getAllConfigurations(filename) {
+  async getStore(filename) {
     const filePath = this.getFilePath(filename);
     const buffer = await readFile(filePath);
 
@@ -63,7 +63,7 @@ class FileStrategy extends StrategyStore {
     }
 
     const filename = FileStrategy.getFileName(userId);
-    const configurations = await this.getAllConfigurations(filename);
+    const configurations = await this.getStore(filename);
 
     let results = [];
     for (let child of configurations.data) {
@@ -84,27 +84,44 @@ class FileStrategy extends StrategyStore {
   }
 
   async insert(configuration) {
-    const {userId, ...subConfiguration} = configuration;
     if(!FileStrategy.isValidConfiguration(configuration)){
       throw new Error('Must have userId and least one property!');
     }
 
+    const {userId, ...configurationOfUser} = configuration;
+
     const filename = FileStrategy.getFileName(userId);
     
-    let configurations = null;
-    if(!this.wasExistedConfigurationFile(filename)){
-      configurations = FileStrategy.makeConfigurationsDedault();
+    let store = null;
+    if(!this.wasExistedStore(filename)){
+      store = FileStrategy.makeStoreDefault();
     }
 
-    configurations.data.push({id: configurations.lastIndex, ...subConfiguration});
-
-    configurations.lastIndex++;
-    configurations.length++;
-
-    await writeFile(this.getFilePath(filename), v8.serialize(configurations));
+    store = FileStrategy.appendConfiguration(store, configurationOfUser);
+    
+    await this.saveStore(filename, store);
   }
 
-  static makeConfigurationsDedault() {
+  static appendConfiguration(store, configuration) {
+    store.data.push({ id: store.lastIndex, ...configuration });
+
+    store.lastIndex++;
+    store.length++;
+
+    return store;
+  }
+
+  async saveStore(filename, store) {
+    const pathOfFile = this.getFilePath(filename);
+    const content = FileStrategy.encode(store);
+    await writeFile(pathOfFile, content);
+  }
+
+  static encode(store) {
+    return v8.serialize(store);
+  }
+
+  static makeStoreDefault() {
     return {
       length: 0,
       lastIndex: 0,

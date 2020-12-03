@@ -86,7 +86,7 @@ describe('File Strategy Test', () => {
     const fileStrategy = new FileStrategy(pathOfDataStore);
     const setting = { ...settingNotHaveFile }
 
-    const wasExisted = fileStrategy.wasExistedConfigurationFile(
+    const wasExisted = fileStrategy.wasExistedStore(
       FileStrategy.getFileName(setting.userId)
     );
 
@@ -97,7 +97,7 @@ describe('File Strategy Test', () => {
     const fileStrategy = new FileStrategy(pathOfDataStore);
     const setting = { ...settingHaveFile };
 
-    const wasExisted = fileStrategy.wasExistedConfigurationFile(
+    const wasExisted = fileStrategy.wasExistedStore(
       FileStrategy.getFileName(setting.userId)
     );
 
