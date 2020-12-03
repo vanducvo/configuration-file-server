@@ -25,7 +25,7 @@ class FileStrategy extends StrategyStore {
   }
 
   static appendConfiguration(store, configuration) {
-    store.data.push({ id: store.lastIndex, ...configuration });
+    store.data.push({ _id: store.lastIndex, ...configuration });
 
     store.lastIndex++;
     store.length++;
@@ -47,12 +47,12 @@ class FileStrategy extends StrategyStore {
 
   static isValidConfiguration(configuration) {
     const properties = Object.getOwnPropertyNames(configuration);
-    return properties.includes('userId') && properties.length > 1;
+    return properties.includes('_userId') && properties.length > 1;
   }
   
   static isValidCondition(condition) {
     const properties = Object.getOwnPropertyNames(condition);
-    return properties.includes('userId') && properties.length > 0;
+    return properties.includes('_userId') && properties.length > 0;
   }
   
   static deleteConfiguration(store, condition) {
@@ -112,9 +112,9 @@ class FileStrategy extends StrategyStore {
       throw new Error('Must have userId constraint!');
     }
 
-    const { userId, ...subCondition } = condition;
+    const { _userId, ...subCondition } = condition;
 
-    const filename = FileStrategy.getFileName(userId);
+    const filename = FileStrategy.getFileName(_userId);
     const configurations = await this.getStore(filename);
 
     let results = [];
@@ -140,9 +140,9 @@ class FileStrategy extends StrategyStore {
       throw new Error('Must have userId and least one property!');
     }
 
-    const { userId, ...configurationOfUser } = configuration;
+    const { _userId, ...configurationOfUser } = configuration;
 
-    const filename = FileStrategy.getFileName(userId);
+    const filename = FileStrategy.getFileName(_userId);
 
     let store = null;
     if (this.wasExistedStore(filename)) {
@@ -165,7 +165,13 @@ class FileStrategy extends StrategyStore {
 
 
   async update(assignments, condition) {
-    throw new Error('Method Not Implmentent!');
+    if (!FileStrategy.isValidCondition(condition)) {
+      throw new Error('Must have userId constraint!');
+    }
+
+    for (let assignment of assignment){
+      
+    }
   }
 
   async delete(condition) {
@@ -173,9 +179,9 @@ class FileStrategy extends StrategyStore {
       throw new Error('Must have userId constraint!');
     }
 
-    const { userId, ...subCondition } = condition;
+    const { _userId, ...subCondition } = condition;
 
-    const filename = FileStrategy.getFileName(userId);
+    const filename = FileStrategy.getFileName(_userId);
 
     if (!this.wasExistedStore(filename)) {
       throw new Error('Configuration not exsist!');

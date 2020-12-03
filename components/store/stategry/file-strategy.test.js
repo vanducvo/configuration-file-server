@@ -22,23 +22,23 @@ const STORE = {
   lastIndex: 4,
   data: [
     {
-      id: 0,
+      _id: 0,
       capacity: 10,
       only: true,
       isDelete: false
     },
     {
-      id: 1,
+      _id: 1,
       capacity: 5,
       isDelete: true
     },
     {
-      id: 2,
+      _id: 2,
       capacity: 6,
       isDelete: false
     },
     {
-      id: 3,
+      _id: 3,
       capacity: 7,
       isDelete: false
     },
@@ -118,8 +118,8 @@ describe('File Strategy Test', () => {
     it(`shoud get with binary - operator: ${Expression.getOperators(Binary)}`, async () => {
       for (const operator of Expression.getOperators(Binary)) {
         const condition = {
-          userId: UserID.COMMON,
-          [Binary[operator]]: ['id', 2]
+          _userId: UserID.COMMON,
+          [Binary[operator]]: ['_id', 2]
         };
 
         const configurations = await fileStrategy.select(condition);
@@ -131,7 +131,7 @@ describe('File Strategy Test', () => {
     it(`shoud get with unary - operator: ${Expression.getOperators(Unary)}`, async () => {
       for (const operator of Expression.getOperators(Unary)) {
         const condition = {
-          userId: UserID.COMMON,
+          _userId: UserID.COMMON,
           [Unary[operator]]: {
             [Binary.NOT_EQUAL]: ['isDelete', true]
           }
@@ -145,7 +145,7 @@ describe('File Strategy Test', () => {
 
     it(`shoud get with condition have some configuration wrong path`, async () => {
       const condition = {
-        userId: UserID.COMMON,
+        _userId: UserID.COMMON,
         [Binary.EQUAL]: ['only', true]
       };
 
@@ -157,10 +157,10 @@ describe('File Strategy Test', () => {
     it(`should get with multi - operator: ${Expression.getOperators(Multary)}`, async () => {
       for (const operator of Expression.getOperators(Multary)) {
         const condition = {
-          userId: UserID.COMMON,
+          _userId: UserID.COMMON,
           [Multary[operator]]: [
             {
-              [Binary.GREATHAN_OR_EQUAL]: ['id', 2]
+              [Binary.GREATHAN_OR_EQUAL]: ['_id', 2]
             },
             {
               [Binary.LESSTHAN]: ['capacity', 7]
@@ -176,7 +176,7 @@ describe('File Strategy Test', () => {
 
     it('should throw with invalid condition', async () => {
       const condition = {
-        gt: ['id', 2]
+        gt: ['_id', 2]
       };
 
       await expect(fileStrategy.select(condition)).rejects.toThrowError();
@@ -203,12 +203,12 @@ describe('File Strategy Test', () => {
     });
 
     it('should throw error if not have configuration exepect userId', async () => {
-      await expect(fileStrategy.insert({ userId: 10 })).rejects.toThrowError();
+      await expect(fileStrategy.insert({ _userId: 10 })).rejects.toThrowError();
     });
 
     it('should append into file configuration - if file does not exits', async () => {
       const timeNow = Date.now();
-      const configuration = { userId: UserID.INSERT_NOT_EXISTED, time: timeNow };
+      const configuration = { _userId: UserID.INSERT_NOT_EXISTED, time: timeNow };
 
       await expectInsert(fileStrategy, configuration);
     });
@@ -216,7 +216,7 @@ describe('File Strategy Test', () => {
     it('should append into file configuration - if file exsits', async () => {
       const now = Date.now();
       const configuration = {
-        userId: UserID.INSERT_EXISTED,
+        _userId: UserID.INSERT_EXISTED,
         time: now,
         isDelete: false
       };
@@ -243,7 +243,7 @@ describe('File Strategy Test', () => {
 
     it('should throw error if condition not have userId', async () => {
       const condition = {
-        eq: ['id', 0]
+        eq: ['_id', 0]
       };
 
       const message = 'Must have userId constraint!';
@@ -253,8 +253,8 @@ describe('File Strategy Test', () => {
 
     it('should throw error if user does not have store file', async () => {
       const condition = {
-        userId: UserID.EMPTY,
-        eq: ['id', 0]
+        _userId: UserID.EMPTY,
+        eq: ['_id', 0]
       };
 
       await expect(fileStrategy.delete(condition)).rejects.toThrowError();
@@ -262,8 +262,8 @@ describe('File Strategy Test', () => {
 
     it('should delele configuration if it match any configuration', async () => {
       const condition = {
-        userId: UserID.DELETE,
-        eq: ['id', 0]
+        _userId: UserID.DELETE,
+        eq: ['_id', 0]
       };
 
       const n = await fileStrategy.delete(condition);
@@ -273,8 +273,8 @@ describe('File Strategy Test', () => {
 
     it('should delele configuration if it does not match any configuration', async () => {
       const condition = {
-        userId: UserID.DELETE,
-        eq: ['id', 10]
+        _userId: UserID.DELETE,
+        eq: ['_id', 10]
       };
 
       const n = await fileStrategy.delete(condition);
@@ -283,6 +283,24 @@ describe('File Strategy Test', () => {
     });
   });
 
+  describe('update', () => {
+    const fileStrategy = new FileStrategy(root);
+    
+    beforeEach(() => {
+      createFile(
+        root,
+        UserID.UPDATE,
+        STORE
+      );
+    });
+
+    it('should throw error if condition not have userId', async () => {
+      const condition = { eq: ['id', 0] };
+      const assignments = [];
+      const message = 'Must have userId constraint!';
+      await expect(fileStrategy.update(assignments, condition)).rejects.toThrowError(message);
+    });
+  });
 
 });
 
@@ -293,7 +311,7 @@ async function expectInsert(fileStrategy, configuration) {
   }
 
   const condition = {
-    userId: configuration.userId,
+    _userId: configuration._userId,
     eq: ['time', configuration.time]
   };
   const expectConfigurations = await fileStrategy.select(condition);
@@ -301,13 +319,13 @@ async function expectInsert(fileStrategy, configuration) {
   expect(expectConfigurations).toHaveLength(times);
 
   for (let i = 0; i < times - 1; i++) {
-    expect(expectConfigurations[i].id).toEqual(expectConfigurations[i + 1].id - 1);
+    expect(expectConfigurations[i]._id).toEqual(expectConfigurations[i + 1]._id - 1);
     expectConfiguration(expectConfigurations[i], configuration);
     expectConfiguration(expectConfigurations[i + 1], configuration);
   }
 }
 
-function expectConfiguration(expectConfiguration, { userId, ...configuration }) {
+function expectConfiguration(expectConfiguration, { _userId, ...configuration }) {
   expect(expectConfiguration).toMatchObject(configuration);
 }
 

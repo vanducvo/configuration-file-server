@@ -11,7 +11,7 @@ class Id extends Expression {
   }
 
   static isValidName(name) {
-    const namePattern = /[\w\.]+\w+$/;
+    const namePattern = /[_\w\.]+\w+$/;
     return namePattern.test(name);
   }
 
