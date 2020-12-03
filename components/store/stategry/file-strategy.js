@@ -20,6 +20,63 @@ class FileStrategy extends StrategyStore {
     return userId + '-configurations.json';
   }
 
+  static decode(buffer) {
+    return v8.deserialize(buffer);
+  }
+
+  static appendConfiguration(store, configuration) {
+    store.data.push({ id: store.lastIndex, ...configuration });
+
+    store.lastIndex++;
+    store.length++;
+
+    return store;
+  }
+
+  static encode(store) {
+    return v8.serialize(store);
+  }
+
+  static makeStoreDefault() {
+    return {
+      length: 0,
+      lastIndex: 0,
+      data: []
+    };
+  }
+
+  static isValidConfiguration(configuration) {
+    const properties = Object.getOwnPropertyNames(configuration);
+    return properties.includes('userId') && properties.length > 1;
+  }
+  
+  static isValidCondition(condition) {
+    const properties = Object.getOwnPropertyNames(condition);
+    return properties.includes('userId') && properties.length > 0;
+  }
+  
+  static deleteConfiguration(store, condition) {
+    let remainingData = [];
+
+
+    for (let configuration of store.data) {
+      try {
+        const expression = Expression.parseFromJSON(condition);
+        const isMatch = expression.evaluate(configuration);
+        if (!isMatch) {
+          remainingData.push(configuration);
+        }
+      } catch (exception) {
+        // Ignore, like is not match.
+      }
+    }
+
+    store.data = remainingData;
+    store.length = remainingData.length;
+
+    return store;
+  }
+
   wasExistedStore(filename) {
     const filePath = this.getFilePath(filename);
     return fs.existsSync(filePath);
@@ -50,18 +107,13 @@ class FileStrategy extends StrategyStore {
     return configurations;
   }
 
-  static decode(buffer) {
-    return v8.deserialize(buffer);
-  }
-
-
   async select(condition) {
     if (!FileStrategy.isValidCondition(condition)) {
       throw new Error('Must have userId constraint!');
     }
 
     const { userId, ...subCondition } = condition;
-    
+
     const filename = FileStrategy.getFileName(userId);
     const configurations = await this.getStore(filename);
 
@@ -104,14 +156,6 @@ class FileStrategy extends StrategyStore {
     await this.saveStore(filename, store);
   }
 
-  static appendConfiguration(store, configuration) {
-    store.data.push({ id: store.lastIndex, ...configuration });
-
-    store.lastIndex++;
-    store.length++;
-
-    return store;
-  }
 
   async saveStore(filename, store) {
     const pathOfFile = this.getFilePath(filename);
@@ -119,76 +163,33 @@ class FileStrategy extends StrategyStore {
     await writeFile(pathOfFile, content);
   }
 
-  static encode(store) {
-    return v8.serialize(store);
-  }
 
-  static makeStoreDefault() {
-    return {
-      length: 0,
-      lastIndex: 0,
-      data: []
-    };
-  }
-
-  static isValidConfiguration(configuration) {
-    const properties = Object.getOwnPropertyNames(configuration);
-    return properties.includes('userId') && properties.length > 1;
-  }
-
-  update(assignments, condition) {
+  async update(assignments, condition) {
     throw new Error('Method Not Implmentent!');
   }
 
   async delete(condition) {
-    if(!FileStrategy.isValidCondition(condition)){
+    if (!FileStrategy.isValidCondition(condition)) {
       throw new Error('Must have userId constraint!');
     }
 
     const { userId, ...subCondition } = condition;
 
     const filename = FileStrategy.getFileName(userId);
-    
-    if(!this.wasExistedStore(filename)){
+
+    if (!this.wasExistedStore(filename)) {
       throw new Error('Configuration not exsist!');
     }
 
     let store = await this.getStore(filename);
-    const oldLength= store.length;
+    const oldLength = store.length;
 
-    store = this.deleteConfiguration(store, subCondition);
+    store = FileStrategy.deleteConfiguration(store, subCondition);
 
     await this.saveStore(filename, store);
 
     const deletedConfigurationNumber = oldLength - store.length;
     return deletedConfigurationNumber;
-  }
-
-  deleteConfiguration(store, condition) {
-    let remainingData = [];
-
-
-    for (let configuration of store.data) {
-      try {
-        const expression = Expression.parseFromJSON(condition);
-        const isMatch = expression.evaluate(configuration);
-        if (!isMatch) {
-          remainingData.push(configuration);
-        }
-      } catch (exception) {
-        // Ignore, like is not match.
-      }
-    }
-
-    store.data = remainingData;
-    store.length = remainingData.length;
-
-    return store;
-  }
-
-  static isValidCondition(condition) {
-    const properties = Object.getOwnPropertyNames(condition);
-    return properties.includes('userId') && properties.length > 0;
   }
 }
 
