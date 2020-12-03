@@ -4,7 +4,6 @@ const v8 = require('v8');
 const util = require('util');
 
 const StrategyStore = require('./strategy-store.js');
-const Enviroment = require('../enviroment/index');
 
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
@@ -57,11 +56,12 @@ class FileStrategy extends StrategyStore {
 
 
   async select(condition) {
-    const {userId, ...subCondition} = condition;
-    if(!userId){
+    if (!FileStrategy.isValidCondition(condition)) {
       throw new Error('Must have userId constraint!');
     }
 
+    const { userId, ...subCondition } = condition;
+    
     const filename = FileStrategy.getFileName(userId);
     const configurations = await this.getStore(filename);
 
@@ -74,8 +74,8 @@ class FileStrategy extends StrategyStore {
         if (isMatch) {
           results.push(child);
         }
-      }catch(exception){
-        // Logger Need To Here
+      } catch (exception) {
+        // Ignore, like is not match.
       }
 
     }
@@ -84,23 +84,23 @@ class FileStrategy extends StrategyStore {
   }
 
   async insert(configuration) {
-    if(!FileStrategy.isValidConfiguration(configuration)){
+    if (!FileStrategy.isValidConfiguration(configuration)) {
       throw new Error('Must have userId and least one property!');
     }
 
-    const {userId, ...configurationOfUser} = configuration;
+    const { userId, ...configurationOfUser } = configuration;
 
     const filename = FileStrategy.getFileName(userId);
-    
+
     let store = null;
-    if(this.wasExistedStore(filename)){
+    if (this.wasExistedStore(filename)) {
       store = await this.getStore(filename);
     } else {
       store = FileStrategy.makeStoreDefault();
     }
 
     store = FileStrategy.appendConfiguration(store, configurationOfUser);
-    
+
     await this.saveStore(filename, store);
   }
 
@@ -140,8 +140,55 @@ class FileStrategy extends StrategyStore {
     throw new Error('Method Not Implmentent!');
   }
 
-  delete(condition) {
-    throw new Error('Method Not Implmentent!');
+  async delete(condition) {
+    if(!FileStrategy.isValidCondition(condition)){
+      throw new Error('Must have userId constraint!');
+    }
+
+    const { userId, ...subCondition } = condition;
+
+    const filename = FileStrategy.getFileName(userId);
+    
+    if(!this.wasExistedStore(filename)){
+      throw new Error('Configuration not exsist!');
+    }
+
+    let store = await this.getStore(filename);
+    const oldLength= store.length;
+
+    store = this.deleteConfiguration(store, subCondition);
+
+    await this.saveStore(filename, store);
+
+    const deletedConfigurationNumber = oldLength - store.length;
+    return deletedConfigurationNumber;
+  }
+
+  deleteConfiguration(store, condition) {
+    let remainingData = [];
+
+
+    for (let configuration of store.data) {
+      try {
+        const expression = Expression.parseFromJSON(condition);
+        const isMatch = expression.evaluate(configuration);
+        if (!isMatch) {
+          remainingData.push(configuration);
+        }
+      } catch (exception) {
+        // Ignore, like is not match.
+      }
+    }
+
+    store.data = remainingData;
+    store.length = remainingData.length;
+
+    return store;
+  }
+
+  static isValidCondition(condition) {
+    const properties = Object.getOwnPropertyNames(condition);
+    return properties.includes('userId') && properties.length > 0;
   }
 }
 

@@ -6,6 +6,10 @@ const Multary = require('./multary.js');
 const Expression = require('./expression.js');
 
 function parseFromJSON(json) {
+  if(isEmtyObject(json)){
+    return new Literal(true);
+  }
+
   let operators = Object.keys(json);
   if (operators.length !== 1) {
     throw new Error('Format Wrong, Please check syntax again');
@@ -17,6 +21,10 @@ function parseFromJSON(json) {
     throw error;
   }
 
+}
+
+function isEmtyObject(obj){
+  return Object.keys(obj).length === 0 && obj.constructor === Object
 }
 
 function parse(json) {
