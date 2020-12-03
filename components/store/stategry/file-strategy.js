@@ -26,7 +26,7 @@ class FileStrategy extends StrategyStore {
 
   static appendConfiguration(store, configuration) {
     // _id must after configuration when configuration has _id it will be over ride
-    store.data.push({...configuration,  _id: store.lastIndex});
+    store.data.push({ ...configuration, _id: store.lastIndex });
 
     store.lastIndex++;
     store.length++;
@@ -50,12 +50,12 @@ class FileStrategy extends StrategyStore {
     const properties = Object.getOwnPropertyNames(configuration);
     return properties.includes('_userId') && properties.length > 1;
   }
-  
+
   static isValidCondition(condition) {
     const properties = Object.getOwnPropertyNames(condition);
     return properties.includes('_userId') && properties.length > 0;
   }
-  
+
   static deleteConfiguration(store, condition) {
     let remainingData = [];
 
@@ -170,9 +170,44 @@ class FileStrategy extends StrategyStore {
       throw new Error('Must have userId constraint!');
     }
 
-    for (let assignment of assignment){
-      
+    const { _userId, ...subCondition } = condition;
+
+    for (let assignment of assignments) {
+      if (assignment.getPath() === '_id') {
+        throw new Error('_id is immutable!');
+      }
     }
+
+    const filename = FileStrategy.getFileName(_userId);
+    let store = await this.getStore(filename);
+
+    let updatedConfigurationNumber = 0;
+    let configurations = store.data;
+    for (let i =0; i < configurations.length; i++) {
+      let expression = Expression.parseFromJSON(subCondition)
+
+      try {
+        const isMatch = expression.evaluate(configurations[i]);
+        if (isMatch) {
+          //why deep copy: because if update all success full then commit, then rollback
+          let copy = this.deepCopyConfiguration(configurations[i]);
+          for(let assignment of assignments){
+            copy = assignment.apply(copy);
+          }
+          configurations[i] = copy;
+          updatedConfigurationNumber++;
+        }
+      } catch (exception) {
+        // Ignore, like is not match.
+      }
+    }
+
+    await this.saveStore(filename, store);
+    return updatedConfigurationNumber;
+  }
+
+  deepCopyConfiguration(configuration) {
+    return v8.deserialize(v8.serialize(configuration));
   }
 
   async delete(condition) {

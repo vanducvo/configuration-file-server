@@ -1,6 +1,8 @@
 const fs = require('fs');
 const v8 = require('v8');
 const FileStrategy = require('./file-strategy.js');
+const Assignment = require('../../dto/assignment.js');
+
 const {
   Expression,
   Binary,
@@ -295,10 +297,39 @@ describe('File Strategy Test', () => {
     });
 
     it('should throw error if condition not have userId', async () => {
-      const condition = { eq: ['id', 0] };
+      const condition = { eq: ['_id', 0] };
       const assignments = [];
       const message = 'Must have userId constraint!';
       await expect(fileStrategy.update(assignments, condition)).rejects.toThrowError(message);
+    });
+
+    it('should throw error if assigmnent have _id feild', async () => {
+      const condition = {_userId: UserID.UPDATE, eq: ['_id', 0] };
+      const assignments = [new Assignment("capacity", 20), new Assignment("_id", 10)];
+      const message = '_id is immutable!';
+      await expect(fileStrategy.update(assignments, condition)).rejects.toThrowError(message);
+    });
+
+    it('should update', async () => {
+      const condition = {_userId: UserID.UPDATE, eq: ['_id', 0] };
+      const assignments = [new Assignment('isDelete', true), new Assignment('capacity', 7)];
+      const n = await fileStrategy.update(assignments, condition);
+      const configuration = await fileStrategy.select(condition);
+
+      expect(configuration[0].isDelete).toEqual(true);
+      expect(configuration[0].capacity).toEqual(7);
+      expect(n).toEqual(1);
+    });
+
+    it('should update fail and rollback', async () => {
+      const condition = {_userId: UserID.UPDATE, eq: ['_id', 0] };
+      const assignments = [new Assignment('isDelete', true), new Assignment('capacity.x', 7)];
+      const n = await fileStrategy.update(assignments, condition);
+      const configuration = await fileStrategy.select(condition);
+
+      //expect(configuration[0].isDelete).toEqual(false);
+      expect(configuration[0].capacity).toEqual(10);
+      expect(n).toEqual(0);
     });
   });
 
