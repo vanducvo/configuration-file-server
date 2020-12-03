@@ -1,19 +1,52 @@
-const EnviromentType = {
-  PRODUCTION: '.production',
-  DEVELOPMENT: '.development'
+const StoreTypes = {
+  FILE: 'file',
+  MYSQL: 'mysql',
+  MONGODB: 'mongodb',
+  getAllStoreType(){
+    return Object.keys(this);
+  },
+  isValid(type){
+    const existsType = Object.values(this);
+    return existsType.includes(type);
+  }
 };
 
+Object.defineProperties(StoreTypes, {
+  getAllStoreType: {
+    enumerable: false,
+    configurable: false,
+    writable: false
+  },
+  isValid: {
+    enumerable: false,
+    configurable: false,
+    writable: false
+  }
+});
+
 class Enviroment {
-  constructor(name){
-    this.config = require(`./${name}.js`);
+  static getStoreType() {
+    const type = process.env.STORE_TYPE;
+    if(StoreTypes.isValid(type)){
+      return process.env.STORE_TYPE;
+    }
+    
+    throw new Error(`Store Type Invalid, it must in ${StoreTypes}`);
   }
 
-  getStrategy(){
-    return this.config.strategy;
+  static getFilePath() {
+    if (process.env.STORE_TYPE === StoreTypes.FILE) {
+      return process.env.FILE_PATH;
+    }
+
+    const message = `Enviroment is using Storage Type: 
+                    "${process.env.STORE_TYPE}", not "file"`;
+
+    throw new Error(message);
   }
 }
 
 module.exports = {
   Enviroment,
-  EnviromentType
+  StoreTypes
 };
