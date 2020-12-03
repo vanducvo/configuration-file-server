@@ -34,6 +34,10 @@ describe('expression - utils', () => {
       expect(expression.evaluate(context)).toBeTruthy();
     });
 
+    it('{} is always true', () => {
+      expect(utils.parseFromJSON({}).evaluate({})).toBeTruthy();
+    });
+
     it('invalid json', () => {
       const invalidJSONs = [
         {

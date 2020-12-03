@@ -62,4 +62,50 @@ describe('Change Class', () => {
     expect(assignment.isDelete()).toBeTruthy();
   });
 
+  it('should apply change value for object with path', () => {
+    let context = {
+      user: {
+        lastname: 'su',
+        firstname: 'do'
+      },
+      age: 20
+    };
+
+    const assignment = new Assignment('user.firstname', 'zudo');
+
+    context = assignment.apply(context);
+
+    expect(context.user.firstname).toEqual('zudo');
+  });
+
+  it('should throw error if pathnot found', () => {
+    let context = {
+      user: {
+        lastname: 'su',
+        firstname: 'do'
+      },
+      age: 20
+    };
+
+    const assignment = new Assignment('user.firstname.x', 'zudo');
+
+    const message = 'Path invalid!';
+    expect(() => assignment.apply(context)).toThrowError(message);
+  });
+
+  it('should delete variable', () => {
+    let context = {
+      user: {
+        lastname: 'su',
+        firstname: 'do'
+      },
+      age: 20
+    };
+
+    const assignment = new Assignment('user.firstname', null, true);
+
+    context = assignment.apply(context);
+
+    expect(context.user.firstname).toBeUndefined();
+  });
 });

@@ -1,6 +1,6 @@
 const v8 = require('v8');
 
-class Configure {
+class Configuration {
   constructor(user, config = {}){
     this._config = this.deepClone(config);
     this._user = user;
@@ -23,4 +23,4 @@ class Configure {
   }
 }
 
-module.exports = Configure;
+module.exports = Configuration;
