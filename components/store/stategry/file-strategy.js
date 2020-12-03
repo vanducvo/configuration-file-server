@@ -25,7 +25,8 @@ class FileStrategy extends StrategyStore {
   }
 
   static appendConfiguration(store, configuration) {
-    store.data.push({ _id: store.lastIndex, ...configuration });
+    // _id must after configuration when configuration has _id it will be over ride
+    store.data.push({...configuration,  _id: store.lastIndex});
 
     store.lastIndex++;
     store.length++;
