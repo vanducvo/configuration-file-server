@@ -1,61 +1,59 @@
+const v8 = require('v8');
+
 class Assignment {
-  constructor(path, value, isDelete = false){
-    this._path = path;
-    this._value = value;
-    this._delete = isDelete;
-  }
-
-  getPath(){
-    return this._path;
-  }
-
-  setPath(path){
-    this._path = path;
-  }
-
-  getValue(){
-    return this._value;
-  }
-
-  setValue(value){
-    this._value = value;
-  }
-
-  isDelete(){
-    return this._delete;
-  }
-
-  setDelete(isDelete){
-    this._delete = isDelete;
-  }
-
-  apply(context){
-    const steps = this.getSteps();
-
-    let variable = context;
-    for(let i = 0; i < steps.length - 1; i++){
-      variable = variable[steps[i]];
-      if(Assignment.isJSON(variable)){
-        throw new Error('Path invalid!');
-      }
+  constructor(properties) {
+    if (!Assignment.isValidProperties(properties)) {
+      const message = this.getClassName() +
+        ': properties is object and _id is immutable';
+      throw new Error(message)
     }
 
-    const lastProperty = steps[steps.length - 1];
-    if(this._delete){
-      delete variable[lastProperty];
-    } else {
-      variable[lastProperty] = this._value;
+    this._properties = Assignment.deepClone(properties);
+  }
+
+  static isValidProperties(properties) {
+    return Assignment.isObject(properties)
+      && !Object.keys(properties).includes('_id');
+  }
+
+  static isObject(properties) {
+    return properties 
+      && typeof (properties) === 'object'
+      && properties.constructor.name === 'Object';
+  }
+
+  static deepClone(json) {
+    return v8.deserialize(v8.serialize(json));
+  }
+
+  apply(_context) {
+    if(!Assignment.isObject(_context)){
+      const message = this.getClassName() +
+      ':apply context must be object';
+      throw new Error(message)
+    }
+
+    const context = Assignment.deepClone(_context);
+    const nameOfProperties = Object.getOwnPropertyNames(this._properties);
+    
+    for(let propertyName of nameOfProperties){
+      if(propertyName in context){
+        if(this._properties[propertyName] === undefined){
+          delete context[propertyName];
+        }else{
+          context[propertyName] = this._properties[propertyName];
+        }
+        
+      } else {
+        throw new Error(`${this.getClassName()}: context not have ${propertyName} property!`)
+      }
     }
     
     return context;
   }
 
-  getSteps() {
-    return this._path.split('.');
-  }
-
-  static isJSON(variable) {
-    return !variable || typeof (variable) !== 'object';
+  getClassName() {
+    return this.constructor.name;
   }
 }
 
