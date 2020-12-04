@@ -7,7 +7,9 @@ const StrategyStore = require('./strategy-store.js');
 
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
-const Expression = require('./expression');
+const Condition = require('../../dto/condition.js');
+const Configuration = require('../../dto/configuration.js');
+const Assignment = require('../../dto/assignment.js');
 
 class FileStrategy extends StrategyStore {
 
@@ -24,15 +26,6 @@ class FileStrategy extends StrategyStore {
     return v8.deserialize(buffer);
   }
 
-  static appendConfiguration(store, configuration) {
-    // _id must after configuration when configuration has _id it will be over ride
-    store.data.push({ ...configuration, _id: store.lastIndex });
-
-    store.lastIndex++;
-    store.length++;
-
-    return store;
-  }
 
   static encode(store) {
     return v8.serialize(store);
@@ -46,39 +39,43 @@ class FileStrategy extends StrategyStore {
     };
   }
 
-  static isValidConfiguration(configuration) {
-    const properties = Object.getOwnPropertyNames(configuration);
-    return properties.includes('_userId') && properties.length > 1;
-  }
+  static appendConfiguration(_store, configuration) {
+    let store = v8.deserialize(v8.serialize(_store));
 
-  static isValidCondition(condition) {
-    const properties = Object.getOwnPropertyNames(condition);
-    return properties.includes('_userId') && properties.length > 0;
-  }
+    // _id must after configuration when configuration has _id it will be over ride
+    store.data.push({ ...configuration, _id: store.lastIndex });
 
-  static deleteConfiguration(store, condition) {
-    let remainingData = [];
-
-
-    for (let configuration of store.data) {
-      try {
-        const expression = Expression.parseFromJSON(condition);
-        const isMatch = expression.evaluate(configuration);
-        if (!isMatch) {
-          remainingData.push(configuration);
-        }
-      } catch (exception) {
-        // Ignore, like is not match.
-      }
-    }
-
-    store.data = remainingData;
-    store.length = remainingData.length;
+    store.lastIndex++;
+    store.length++;
 
     return store;
   }
 
-  wasExistedStore(filename) {
+  static deleteConfiguration(_store, condition) {
+    let store = v8.deserialize(v8.serialize(_store));
+    let remainConfigurations = [];
+    let deleteConfigurations = [];
+
+    for (let configuration of store.data) {
+      const isMatch = condition.checkWith(configuration);
+      if (isMatch) {
+        deleteConfigurations.push(configuration);
+      } else {
+        remainConfigurations.push(configuration);
+      }
+    }
+
+    store.data = remainConfigurations;
+    store.length = remainConfigurations.length;
+
+    return {
+      newStore: store,
+      deletedConfigurations: deleteConfigurations
+    };
+  }
+
+  wasExistedStore(userId) {
+    const filename = FileStrategy.getFileName(userId);
     const filePath = this.getFilePath(filename);
     return fs.existsSync(filePath);
   }
@@ -87,19 +84,18 @@ class FileStrategy extends StrategyStore {
     return path.join(this._path, filename);
   }
 
-  async getNumberOfAllConfigurations(userId) {
-    const filename = FileStrategy.getFileName(userId);
-
-    if (!this.wasExistedStore(filename)) {
+  async userConfigurationCount(userId) {
+    if (!this.wasExistedStore(userId)) {
       return 0;
     }
 
-    const store = await this.getStore(filename);
+    const store = await this.getStore(userId);
 
     return store.length;
   }
 
-  async getStore(filename) {
+  async getStore(userId) {
+    const filename = FileStrategy.getFileName(userId);
     const filePath = this.getFilePath(filename);
     const buffer = await readFile(filePath);
 
@@ -108,130 +104,104 @@ class FileStrategy extends StrategyStore {
     return configurations;
   }
 
-  async select(condition) {
-    if (!FileStrategy.isValidCondition(condition)) {
-      throw new Error('Must have userId constraint!');
-    }
-
-    const { _userId, ...subCondition } = condition;
-
-    const filename = FileStrategy.getFileName(_userId);
-    const configurations = await this.getStore(filename);
-
-    let results = [];
-    for (let child of configurations.data) {
-      let expression = Expression.parseFromJSON(subCondition)
-
-      try {
-        const isMatch = expression.evaluate(child);
-        if (isMatch) {
-          results.push(child);
-        }
-      } catch (exception) {
-        // Ignore, like is not match.
-      }
-
-    }
-
-    return results;
-  }
-
-  async insert(configuration) {
-    if (!FileStrategy.isValidConfiguration(configuration)) {
-      throw new Error('Must have userId and least one property!');
-    }
-
-    const { _userId, ...configurationOfUser } = configuration;
-
-    const filename = FileStrategy.getFileName(_userId);
-
-    let store = null;
-    if (this.wasExistedStore(filename)) {
-      store = await this.getStore(filename);
-    } else {
-      store = FileStrategy.makeStoreDefault();
-    }
-
-    store = FileStrategy.appendConfiguration(store, configurationOfUser);
-
-    await this.saveStore(filename, store);
-  }
-
-
-  async saveStore(filename, store) {
+  async saveStore(userId, store) {
+    const filename = FileStrategy.getFileName(userId);
     const pathOfFile = this.getFilePath(filename);
     const content = FileStrategy.encode(store);
     await writeFile(pathOfFile, content);
   }
 
+  async select(_condition) {
+    const condition = new Condition(_condition);
+    const userConfigurations = await this.getStore(condition.getUserId());
 
-  async update(assignments, condition) {
-    if (!FileStrategy.isValidCondition(condition)) {
-      throw new Error('Must have userId constraint!');
-    }
+    let results = [];
+    for (let configuration of userConfigurations.data) {
+      let isMatch = condition.checkWith(configuration)
 
-    const { _userId, ...subCondition } = condition;
-
-    for (let assignment of assignments) {
-      if (assignment.getPath() === '_id') {
-        throw new Error('_id is immutable!');
+      if (isMatch) {
+        results.push(configuration);
       }
     }
 
-    const filename = FileStrategy.getFileName(_userId);
-    let store = await this.getStore(filename);
+    return results;
+  }
 
-    let updatedConfigurationNumber = 0;
-    let configurations = store.data;
-    for (let i =0; i < configurations.length; i++) {
-      let expression = Expression.parseFromJSON(subCondition)
+  async insert(_configuration) {
+    const configuration = new Configuration(_configuration);
+    const userId = configuration.getUserId();
+    let store = null;
+    if (this.wasExistedStore(userId)) {
+      store = await this.getStore(userId);
+    } else {
+      store = FileStrategy.makeStoreDefault();
+    }
 
-      try {
-        const isMatch = expression.evaluate(configurations[i]);
-        if (isMatch) {
-          //why deep copy: because if update all success full then commit, then rollback
-          let copy = this.deepCopyConfiguration(configurations[i]);
-          for(let assignment of assignments){
-            copy = assignment.apply(copy);
-          }
-          configurations[i] = copy;
-          updatedConfigurationNumber++;
+    store = FileStrategy.appendConfiguration(store, configuration.getConfig());
+    const id = store.lastIndex - 1;
+
+    await this.saveStore(userId, store);
+
+    return id;
+  }
+
+  async update(_assignment, _condition) {
+    const assignment = new Assignment(_assignment);
+    const condition = new Condition(_condition);
+
+    let store = await this.getStore(condition.getUserId());
+
+    const {
+      newStore,
+      updatedConfigurations
+    } = FileStrategy.updatedConfigurations(store, assignment, condition);
+
+    await this.saveStore(condition.getUserId(), newStore);
+
+    return updatedConfigurations;
+  }
+
+  static updatedConfigurations(_store, assignment, condition) {
+    const store = v8.deserialize(v8.serialize(_store));
+    const configurations = store.data;
+
+    let updatedConfigurations = [];
+    for (let i = 0; i < configurations.length; i++) {
+      const isMatch = condition.checkWith(configurations[i]);
+      if (isMatch) {
+        try {
+          configurations[i] = assignment.apply(configurations[i]);
+          updatedConfigurations.push(configurations[i]);
+        } catch (exception) {
+          //Ignore
         }
-      } catch (exception) {
-        // Ignore, like is not match.
       }
     }
 
-    await this.saveStore(filename, store);
-    return updatedConfigurationNumber;
+    return {
+      newStore: store,
+      updatedConfigurations
+    };
   }
 
-  deepCopyConfiguration(configuration) {
-    return v8.deserialize(v8.serialize(configuration));
-  }
+  async delete(_condition) {
+    const condition = new Condition(_condition);
+    const userId = condition.getUserId();
 
-  async delete(condition) {
-    if (!FileStrategy.isValidCondition(condition)) {
-      throw new Error('Must have userId constraint!');
+    if (!this.wasExistedStore(userId)) {
+      return [];
     }
 
-    const { _userId, ...subCondition } = condition;
+    let store = await this.getStore(userId);
 
-    const filename = FileStrategy.getFileName(_userId);
+    const {
+      newStore,
+      deletedConfigurations
+    } = FileStrategy.deleteConfiguration(store, condition);
 
-    if (!this.wasExistedStore(filename)) {
-      throw new Error('Configuration not exsist!');
-    }
+    await this.saveStore(userId, newStore);
 
-    let store = await this.getStore(filename);
-    const oldLength = store.length;
-
-    store = FileStrategy.deleteConfiguration(store, subCondition);
-
-    await this.saveStore(filename, store);
-
-    const deletedConfigurationNumber = oldLength - store.length;
-    return deletedConfigurationNumber;
+    return deletedConfigurations;
   }
 }
 

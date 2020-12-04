@@ -1,111 +1,88 @@
 const Assignment = require('./assignment.js');
 
 describe('Change Class', () => {
-  const path = 'user.name';
-  const value = 10;
-
-  it('should have constructor with default arguments', () => {
-    const assignment = new Assignment(path , value);
+  it('can constructor with default arguments', () => {
+    const assignment = new Assignment({ name: 'duc' });
 
     expect(assignment).toBeInstanceOf(Assignment);
   });
 
-  it('should have constructor with path, value, isDelete arguments', () => {
-    const assignment = new Assignment(path, value, true);
+  it('should throw error when invalid properties', () => {
+    const invalidProperties = [1, 1.1, '1.1', null, NaN, undefined, { _id: 0 }];
 
-    expect(assignment).toBeInstanceOf(Assignment);
+    let message = Assignment.name +
+      ': properties is object and _id is immutable';
+    for (let properties of invalidProperties) {
+      expect(() => {
+        new Assignment(properties)
+      }).toThrowError()
+    }
   });
 
-  it('should have get path', () => {
-    const assignment = new Assignment(path, value);
+  it('can update property', () => {
+    const context = {
+      user: 'sudo',
+      age: 21
+    }
+    const properties = {
+      user: 'brew'
+    };
+    const assignment = new Assignment(
+      properties
+    );
 
-    expect(assignment.getPath()).toEqual(path);
+    expect(assignment.apply(context)).toEqual({ ...context, ...properties });
   });
 
-  it('should have set path', () => {
-    const assignment = new Assignment(path, value); 
-    const newPath = path + ".new";
+  it('can delete property', () => {
+    const context = {
+      user: 'sudo',
+      age: 21
+    }
+    const properties = {
+      user: undefined
+    };
+    const assignment = new Assignment(
+      properties
+    );
 
-    assignment.setPath(newPath);
-
-    expect(assignment.getPath()).toEqual(newPath);
+    expect(assignment.apply(context)).toEqual({ age: context.age });
   });
 
-  it('should have get value', () => {
-    const assignment = new Assignment(path, value);
+  it('should throw when invalid wrong', () => {
+    const invalidContexts = [1, 1.1, '1.1', null, NaN, undefined];
+    const properties = {
+      user: 'brew'
+    };
+    const assignment = new Assignment(
+      properties
+    );
 
-    expect(assignment.getValue()).toEqual(value);
+    const message = Assignment.name + ':apply context must be object';
+    for (let context of invalidContexts) {
+      expect(() => {
+        assignment.apply(context);
+      }).toThrowError(message)
+    }
   });
 
-  it('should have set value', () => {
-    const assignment = new Assignment(path, value);
-    const newValue = value + 10;
-
-    assignment.setValue(newValue);
-
-    expect(assignment.getValue()).toEqual(newValue);
-  });
-
-  it('should have is delete', () => {
-    const assignment = new Assignment(path, value);
-
-    expect(assignment.isDelete()).toBeFalsy();
-  });
-
-  it('should have is delete', () => {
-    const assignment = new Assignment(path, value);
-
-    expect(assignment.isDelete()).toBeFalsy();
-
-    assignment.setDelete(true);
-
-    expect(assignment.isDelete()).toBeTruthy();
-  });
-
-  it('should apply change value for object with path', () => {
-    let context = {
-      user: {
-        lastname: 'su',
-        firstname: 'do'
-      },
+  it('should throw when property update not in context', () => {
+    const context = {
+      user: 'brew',
       age: 20
     };
-
-    const assignment = new Assignment('user.firstname', 'zudo');
-
-    context = assignment.apply(context);
-
-    expect(context.user.firstname).toEqual('zudo');
-  });
-
-  it('should throw error if pathnot found', () => {
-    let context = {
-      user: {
-        lastname: 'su',
-        firstname: 'do'
-      },
-      age: 20
+    const properties = {
+      getMarried: false
     };
+    const assignment = new Assignment(
+      properties
+    );
 
-    const assignment = new Assignment('user.firstname.x', 'zudo');
 
-    const message = 'Path invalid!';
-    expect(() => assignment.apply(context)).toThrowError(message);
+    const message = Assignment.name + ': context not have getMarried property!'
+    expect(() => {
+      assignment.apply(context);
+    }).toThrowError(message);
   });
 
-  it('should delete variable', () => {
-    let context = {
-      user: {
-        lastname: 'su',
-        firstname: 'do'
-      },
-      age: 20
-    };
-
-    const assignment = new Assignment('user.firstname', null, true);
-
-    context = assignment.apply(context);
-
-    expect(context.user.firstname).toBeUndefined();
-  });
 });

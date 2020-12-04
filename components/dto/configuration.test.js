@@ -8,72 +8,54 @@ describe('Configure Class', () => {
     age: 30
   };
 
-  it('should have constructor with no parameter', () => {
-    const configuration = new Configuration();
-    
+
+  it('can create configuaration', () => {
+    const configuration = new Configuration({ _userId: 0, names: 'sudoers' });
+
     expect(configuration).toBeInstanceOf(Configuration);
   });
 
+  it('should throw errors when properties invalid', () => {
+    const message = Configuration.name +
+      ': properties is object and userID is integer number'
 
-  it('should have constructor with user, config arguments', () => {
-    const configuration = new Configuration(user, info);
-    
-    expect(configuration).toBeInstanceOf(Configuration);
+    expect(() => {
+      new Configuration({ names: 'sudoers' });
+    }).toThrowError(message);
   });
 
   it('should have get config', () => {
-    const configuration = new Configuration(user, info);
-    
-    expect(configuration.getConfig()).toEqual(info);
+    const properties = { _userId: 0, names: 'sudoers' };
+    const configuration = new Configuration(properties);
+
+    const config = { names: 'sudoers' };
+    expect(configuration.getConfig()).toEqual(config);
   });
 
-  it('should have set config', () => {
-    const configuration = new Configuration();
-    
-    configuration.setConfig(info);
-    
-    expect(configuration.getConfig()).toEqual(info);
+
+  it('should have get user id', () => {
+    const properties = { _userId: 0, names: 'sudoers' };
+    const configuration = new Configuration(properties);
+
+
+    expect(configuration.getUserId()).toEqual(properties._userId);
   });
 
-  it('should have get user', () => {
-    const configuration = new Configuration(user, info);
-    
-    expect(configuration.getUser()).toEqual(user);
-  });
 
-  it('should have set user', () => {
-    const configuration = new Configuration
-  });
 
   it('should have deep copy config when intital', () => {
-    let complexInfo = {
+    let properties = {
+      _userId: 0,
       name: 'Sudoers',
       age: {
         solarCalendar: 30,
         lunarCalendar: 31
       }
     };
-    
-    const configuration = new Configuration(complexInfo);
-    complexInfo.age.complexInfo = 31;
 
-    expect(configuration.getConfig()).not.toEqual(complexInfo);
-  });
+    const configuration = new Configuration(properties);
+    properties.age.complexInfo = 31;
 
-  it('should have deep copy config when set config', () => {
-    let complexInfo = {
-      name: 'Sudoers',
-      age: {
-        solarCalendar: 30,
-        lunarCalendar: 31
-      }
-    };
-    const newsolarCalendar = 31
-
-    const configuration = new Configuration();
-    configuration.setConfig(complexInfo);
-    complexInfo.age.solarCalendar = newsolarCalendar;
-
-    expect(configuration.getConfig.solarCalendar).not.toEqual(newsolarCalendar);
+    expect(configuration.getConfig()).not.toEqual(properties);
   });
 });

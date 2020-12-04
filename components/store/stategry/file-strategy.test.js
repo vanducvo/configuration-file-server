@@ -1,81 +1,41 @@
 const fs = require('fs');
 const v8 = require('v8');
 const FileStrategy = require('./file-strategy.js');
-const Assignment = require('../../dto/assignment.js');
-
-const {
-  Expression,
-  Binary,
-  Multary,
-  Unary
-} = require('./expression/index.js');
 
 const UserID = {
   EMPTY: 0,
-  COMMON:1,
+  COMMON: 1,
   INSERT_NOT_EXISTED: 2,
   INSERT_EXISTED: 3,
   DELETE: 4,
   UPDATE: 5
 };
 
-const STORE = {
-  length: 4,
-  lastIndex: 4,
-  data: [
-    {
-      _id: 0,
-      capacity: 10,
-      only: true,
-      isDelete: false
-    },
-    {
-      _id: 1,
-      capacity: 5,
-      isDelete: true
-    },
-    {
-      _id: 2,
-      capacity: 6,
-      isDelete: false
-    },
-    {
-      _id: 3,
-      capacity: 7,
-      isDelete: false
-    },
-  ]
-};
 
 const root = process.cwd() + '/file-db';
 
 describe('File Strategy Test', () => {
+
   beforeAll(() => {
     if (!fs.existsSync(root)) {
       fs.mkdirSync(root);
     }
-
-    createFile(
-      root,
-      UserID.COMMON,
-      STORE
-    );
   });
 
-  it('should have constructor with path argument', () => {
+  it('can have constructor with path argument', () => {
     const fileStrategy = new FileStrategy(root);
 
     expect(fileStrategy).toBeInstanceOf(FileStrategy);
   });
 
-  it('should get configuration filename', () => {
+  it('can get configuration filename', () => {
     const userId = 1;
     const filename = '1-configurations.json';
 
     expect(FileStrategy.getFileName(userId)).toEqual(filename)
   });
 
-  it('should check user does not have a configuration file', () => {
+  it('can check user does not have a configuration file', () => {
     const fileStrategy = new FileStrategy(root);
 
     const wasExisted = fileStrategy.wasExistedStore(
@@ -85,255 +45,326 @@ describe('File Strategy Test', () => {
     expect(wasExisted).toBeFalsy();
   });
 
-  it('should check user have a configuration file', () => {
+  it('can check user have a configuration file', () => {
     const fileStrategy = new FileStrategy(root);
 
     const wasExisted = fileStrategy.wasExistedStore(
-      FileStrategy.getFileName(UserID.COMMON)
+      UserID.COMMON
     );
 
     expect(wasExisted).toBeTruthy();
   });
 
-  describe('getNumberOfAllConfigurations', () => {
-    const fileStrategy = new FileStrategy(root);
+  describe('can get useConfigurationCount', () => {
+
     it('should be 0 configurations when doest not exists file', async () => {
-      const n = await fileStrategy.getNumberOfAllConfigurations(
+      const fileStrategy = new FileStrategy(root);
+      const n = await fileStrategy.userConfigurationCount(
         UserID.EMPTY
       );
 
       expect(n).toEqual(0);
     });
 
-    it('should be Number Of All Configurations', async () => {
-      const n = await fileStrategy.getNumberOfAllConfigurations(
+    it('should be number of configurations', async () => {
+      const fileStrategy = new FileStrategy(root);
+      const store = {
+        length: 2,
+        lastIndex: 2,
+        data:
+          [
+            {
+              _id: 0,
+              name: 'sudo'
+            },
+            {
+              _id: 1,
+              name: 'brew'
+            }
+          ]
+      };
+
+      createFile(root, UserID.COMMON, store);
+
+      const n = await fileStrategy.userConfigurationCount(
         UserID.COMMON
       );
 
-      expect(n).toEqual(STORE.length);
+      expect(n).toEqual(store.length);
     });
   });
 
-  describe('select', () => {
-    const fileStrategy = new FileStrategy(root);
-
-    it(`shoud get with binary - operator: ${Expression.getOperators(Binary)}`, async () => {
-      for (const operator of Expression.getOperators(Binary)) {
-        const condition = {
-          _userId: UserID.COMMON,
-          [Binary[operator]]: ['_id', 2]
-        };
-
-        const configurations = await fileStrategy.select(condition);
-
-        expect(configurations.length).toBeGreaterThan(0);
-      }
-    });
-
-    it(`shoud get with unary - operator: ${Expression.getOperators(Unary)}`, async () => {
-      for (const operator of Expression.getOperators(Unary)) {
-        const condition = {
-          _userId: UserID.COMMON,
-          [Unary[operator]]: {
-            [Binary.NOT_EQUAL]: ['isDelete', true]
-          }
-        };
-
-        const configurations = await fileStrategy.select(condition);
-
-        expect(configurations.length).toBeGreaterThan(0);
-      }
-    });
-
-    it(`shoud get with condition have some configuration wrong path`, async () => {
-      const condition = {
-        _userId: UserID.COMMON,
-        [Binary.EQUAL]: ['only', true]
-      };
-
-      const configurations = await fileStrategy.select(condition);
-
-      expect(configurations.length).toBeGreaterThan(0);
-    });
-
-    it(`should get with multi - operator: ${Expression.getOperators(Multary)}`, async () => {
-      for (const operator of Expression.getOperators(Multary)) {
-        const condition = {
-          _userId: UserID.COMMON,
-          [Multary[operator]]: [
+  describe('can select', () => {
+    it('have some configuration match', async () => {
+      const fileStrategy = new FileStrategy(root);
+      const store = {
+        length: 2,
+        lastIndex: 2,
+        data:
+          [
             {
-              [Binary.GREATHAN_OR_EQUAL]: ['_id', 2]
+              _id: 0,
+              name: 'sudo'
             },
             {
-              [Binary.LESSTHAN]: ['capacity', 7]
+              _id: 1,
+              name: 'brew'
             }
           ]
-        };
-
-        const configurations = await fileStrategy.select(condition);
-
-        expect(configurations.length).toBeGreaterThan(0);
-      }
-    });
-
-    it('should throw with invalid condition', async () => {
-      const condition = {
-        gt: ['_id', 2]
       };
 
-      await expect(fileStrategy.select(condition)).rejects.toThrowError();
+      createFile(root, UserID.INSERT_EXISTED, store);
+
+      const n = await fileStrategy.select(
+        {
+          _userId: UserID.INSERT_EXISTED,
+          name: 'brew'
+        }
+      );
+
+      expect(n).toHaveLength(1);
+      expect(n[0]).toEqual(store.data[1]);
+    });
+
+    it('do not have any configuration match', async () => {
+      const fileStrategy = new FileStrategy(root);
+      const store = {
+        length: 2,
+        lastIndex: 2,
+        data:
+          [
+            {
+              _id: 0,
+              name: 'sudo'
+            },
+            {
+              _id: 1,
+              name: 'brew'
+            }
+          ]
+      };
+
+      createFile(root, UserID.INSERT_EXISTED, store);
+
+      const n = await fileStrategy.select(
+        {
+          _userId: UserID.INSERT_EXISTED,
+          age: 30
+        }
+      );
+
+      expect(n).toHaveLength(0);
     });
   });
 
-  describe('insert', () => {
-    const fileStrategy = new FileStrategy(root);
+  describe('can insert', () => {
 
-    beforeEach(() => {
-      const storeNotExists = `${root}/${UserID.INSERT_NOT_EXISTED}-configurations.json`;
-      if (fs.existsSync(storeNotExists)) {
-        fs.unlinkSync(storeNotExists);
-      }
+    it('can append into file configuration - if file does not exits', async () => {
+      const fileStrategy = new FileStrategy(root);
 
-      createFile(
-        root,
-        UserID.INSERT_EXISTED,
-        STORE
-      );
-    });
-    it('should throw error if not have userId', async () => {
-      await expect(fileStrategy.insert({ age: 10 })).rejects.toThrowError();
-    });
-
-    it('should throw error if not have configuration exepect userId', async () => {
-      await expect(fileStrategy.insert({ _userId: 10 })).rejects.toThrowError();
-    });
-
-    it('should append into file configuration - if file does not exits', async () => {
+      deleteStore(root, UserID.INSERT_NOT_EXISTED);
       const timeNow = Date.now();
-      const configuration = { _userId: UserID.INSERT_NOT_EXISTED, time: timeNow };
+      const properties = { _userId: UserID.INSERT_NOT_EXISTED, time: timeNow };
 
-      await expectInsert(fileStrategy, configuration);
+      await expectInsert(fileStrategy, properties);
     });
 
-    it('should append into file configuration - if file exsits', async () => {
+    it('can append into file configuration - if file exsits', async () => {
+      const fileStrategy = new FileStrategy(root);
       const now = Date.now();
-      const configuration = {
+      const properties = {
         _userId: UserID.INSERT_EXISTED,
         time: now,
         isDelete: false
       };
 
-      expectInsert(fileStrategy, configuration);
+      const store = {
+        length: 1,
+        lastIndex: 1,
+        data: [
+          {
+            _id: 0
+          }
+        ]
+      }
+      createFile(root, UserID.INSERT_EXISTED, store);
+
+      await expectInsert(fileStrategy, properties);
+    });
+
+    it('can return id of configuration appended', async () => {
+      const fileStrategy = new FileStrategy(root);
+      const now = Date.now();
+      const properties = {
+        _userId: UserID.INSERT_EXISTED,
+        time: now,
+        isDelete: false
+      };
+
+      const store = {
+        length: 1,
+        lastIndex: 1,
+        data: [
+          {
+            _id: 0
+          }
+        ]
+      }
+      createFile(root, UserID.INSERT_EXISTED, store);
+
+      const id = await fileStrategy.insert(properties);
+
+      expect(id).toEqual(1);
     });
   });
 
-  describe('delete', () => { 
-    const fileStrategy = new FileStrategy(root);
-
-    beforeEach(() => {
-      const storeNotExists = UserID.INSERT_NOT_EXISTED + '-configurations.json';
-      if (fs.existsSync(storeNotExists)) {
-        fs.unlinkSync(storeNotExists);
+  describe('delete', () => {
+    it('can delele configuration if it match some configuration', async () => {
+      const fileStrategy = new FileStrategy(root);
+      
+      const store = {
+        length: 1,
+        lastIndex: 1,
+        data: [
+          {
+            _id: 0
+          },
+          {
+            _id: 1
+          },
+        ]
       }
+      createFile(root, UserID.DELETE, store);
 
-      createFile(
-        root,
-        UserID.DELETE,
-        STORE
-      );
-    });
-
-    it('should throw error if condition not have userId', async () => {
       const condition = {
-        eq: ['_id', 0]
+        _userId: UserID.DELETE,
+        _id: 0
       };
 
-      const message = 'Must have userId constraint!';
-
-      await expect(fileStrategy.delete(condition)).rejects.toThrowError(message);
+      const deletedConfigurations = await fileStrategy.delete(condition);
+      expect(deletedConfigurations).toHaveLength(1);
+      expect(deletedConfigurations[0]).toEqual(store.data[0]);
     });
 
-    it('should throw error if user does not have store file', async () => {
+    it('should return [] when user not yet have configuration file', async () => {
+      const fileStrategy = new FileStrategy(root);
+
       const condition = {
         _userId: UserID.EMPTY,
-        eq: ['_id', 0]
+        _id: 0
       };
 
-      await expect(fileStrategy.delete(condition)).rejects.toThrowError();
+      const deletedConfigurations = await fileStrategy.delete(condition);
+      expect(deletedConfigurations).toHaveLength(0);
+
     });
 
-    it('should delele configuration if it match any configuration', async () => {
+    it('can delele configuration if it does not match any configuration', async () => {
+      const fileStrategy = new FileStrategy(root);
+      
+      const store = {
+        length: 1,
+        lastIndex: 1,
+        data: [
+          {
+            _id: 0
+          },
+          {
+            _id: 1
+          },
+        ]
+      }
+      createFile(root, UserID.DELETE, store);
+
       const condition = {
         _userId: UserID.DELETE,
-        eq: ['_id', 0]
+        name: 'sudo'
       };
 
-      const n = await fileStrategy.delete(condition);
-      
-      expect(n).toEqual(1);
-    });
-
-    it('should delele configuration if it does not match any configuration', async () => {
-      const condition = {
-        _userId: UserID.DELETE,
-        eq: ['_id', 10]
-      };
-
-      const n = await fileStrategy.delete(condition);
-      
-      expect(n).toEqual(0);
+      const deletedConfigurations = await fileStrategy.delete(condition);
+      expect(deletedConfigurations).toHaveLength(0);
     });
   });
 
   describe('update', () => {
-    const fileStrategy = new FileStrategy(root);
-    
-    beforeEach(() => {
-      createFile(
-        root,
-        UserID.UPDATE,
-        STORE
-      );
-    });
 
-    it('should throw error if condition not have userId', async () => {
-      const condition = { eq: ['_id', 0] };
-      const assignments = [];
-      const message = 'Must have userId constraint!';
-      await expect(fileStrategy.update(assignments, condition)).rejects.toThrowError(message);
-    });
+    it('can update property', async () => {
+      const fileStrategy = new FileStrategy(root);
+      const store = {
+        length: 1,
+        lastIndex: 1,
+        data: [
+          {
+            _id: 0,
+            name: 'sudo'
+          },
+          {
+            _id: 1,
+            name: 'nani'
+          },
+        ]
+      };
+      createFile(root, UserID.UPDATE, store);
 
-    it('should throw error if assigmnent have _id feild', async () => {
-      const condition = {_userId: UserID.UPDATE, eq: ['_id', 0] };
-      const assignments = [new Assignment("capacity", 20), new Assignment("_id", 10)];
-      const message = '_id is immutable!';
-      await expect(fileStrategy.update(assignments, condition)).rejects.toThrowError(message);
-    });
+      const condition = {
+        _userId: UserID.UPDATE,
+        _id: 0
+      };
 
-    it('should update', async () => {
-      const condition = {_userId: UserID.UPDATE, eq: ['_id', 0] };
-      const assignments = [new Assignment('isDelete', true), new Assignment('capacity', 7)];
-      const n = await fileStrategy.update(assignments, condition);
+      const assignment = {
+        name: 'brew'
+      };
+
+      const updatedConfigurations = await fileStrategy.update(assignment, condition);
       const configuration = await fileStrategy.select(condition);
 
-      expect(configuration[0].isDelete).toEqual(true);
-      expect(configuration[0].capacity).toEqual(7);
-      expect(n).toEqual(1);
+      expect(updatedConfigurations).toHaveLength(1);
+      expect(configuration[0].name).toEqual(assignment.name);
     });
 
-    it('should update fail and rollback', async () => {
-      const condition = {_userId: UserID.UPDATE, eq: ['_id', 0] };
-      const assignments = [new Assignment('isDelete', true), new Assignment('capacity.x', 7)];
-      const n = await fileStrategy.update(assignments, condition);
+    it('should delete property', async () => {
+      const fileStrategy = new FileStrategy(root);
+      const store = {
+        length: 1,
+        lastIndex: 1,
+        data: [
+          {
+            _id: 0,
+            name: 'sudo'
+          },
+          {
+            _id: 1,
+            name: 'nani'
+          },
+        ]
+      };
+      createFile(root, UserID.UPDATE, store);
+
+      const condition = {
+        _userId: UserID.UPDATE,
+        _id: 0
+      };
+
+      const assignment = {
+        name: undefined
+      };
+
+      const updatedConfigurations = await fileStrategy.update(assignment, condition);
       const configuration = await fileStrategy.select(condition);
 
-      //expect(configuration[0].isDelete).toEqual(false);
-      expect(configuration[0].capacity).toEqual(10);
-      expect(n).toEqual(0);
+      expect(updatedConfigurations).toHaveLength(1);
+      expect(configuration[0].name).toBeUndefined();
     });
   });
 
 });
+
+function deleteStore(root, userId) {
+  const storeNotExists = `${root}/${userId}-configurations.json`;
+  if (fs.existsSync(storeNotExists)) {
+    fs.unlinkSync(storeNotExists);
+  }
+}
 
 async function expectInsert(fileStrategy, configuration) {
   const times = 5;
@@ -343,8 +374,9 @@ async function expectInsert(fileStrategy, configuration) {
 
   const condition = {
     _userId: configuration._userId,
-    eq: ['time', configuration.time]
+    time: configuration.time
   };
+
   const expectConfigurations = await fileStrategy.select(condition);
 
   expect(expectConfigurations).toHaveLength(times);
@@ -360,6 +392,6 @@ function expectConfiguration(expectConfiguration, { _userId, ...configuration })
   expect(expectConfiguration).toMatchObject(configuration);
 }
 
-function createFile(path, name, data) {
-  fs.writeFileSync(`${path}/${name}-configurations.json`, v8.serialize(data));
+function createFile(path, userId, store) {
+  fs.writeFileSync(`${path}/${userId}-configurations.json`, v8.serialize(store));
 }
