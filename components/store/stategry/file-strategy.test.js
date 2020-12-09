@@ -47,7 +47,16 @@ describe('File Strategy Test', () => {
 
   it('can check user have a configuration file', () => {
     const fileStrategy = new FileStrategy(root);
+    const store = {
+      length: 0,
+      lastIndex: 0,
+      data:
+        [
+          
+        ]
+    };
 
+    createFile(root, UserID.COMMON, store);
     const wasExisted = fileStrategy.wasExistedStore(
       UserID.COMMON
     );

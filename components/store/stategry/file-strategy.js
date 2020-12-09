@@ -26,7 +26,6 @@ class FileStrategy extends StrategyStore {
     return v8.deserialize(buffer);
   }
 
-
   static encode(store) {
     return v8.serialize(store);
   }
@@ -71,6 +70,29 @@ class FileStrategy extends StrategyStore {
     return {
       newStore: store,
       deletedConfigurations: deleteConfigurations
+    };
+  }
+
+  static updatedConfigurations(_store, assignment, condition) {
+    const store = v8.deserialize(v8.serialize(_store));
+    const configurations = store.data;
+
+    let updatedConfigurations = [];
+    for (let i = 0; i < configurations.length; i++) {
+      const isMatch = condition.checkWith(configurations[i]);
+      if (isMatch) {
+        try {
+          configurations[i] = assignment.apply(configurations[i]);
+          updatedConfigurations.push(configurations[i]);
+        } catch (exception) {
+          //Ignore
+        }
+      }
+    }
+
+    return {
+      newStore: store,
+      updatedConfigurations
     };
   }
 
@@ -159,29 +181,6 @@ class FileStrategy extends StrategyStore {
     await this.saveStore(condition.getUserId(), newStore);
 
     return updatedConfigurations;
-  }
-
-  static updatedConfigurations(_store, assignment, condition) {
-    const store = v8.deserialize(v8.serialize(_store));
-    const configurations = store.data;
-
-    let updatedConfigurations = [];
-    for (let i = 0; i < configurations.length; i++) {
-      const isMatch = condition.checkWith(configurations[i]);
-      if (isMatch) {
-        try {
-          configurations[i] = assignment.apply(configurations[i]);
-          updatedConfigurations.push(configurations[i]);
-        } catch (exception) {
-          //Ignore
-        }
-      }
-    }
-
-    return {
-      newStore: store,
-      updatedConfigurations
-    };
   }
 
   async delete(_condition) {
