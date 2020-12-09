@@ -13,9 +13,10 @@ const Assignment = require('../../dto/assignment.js');
 
 class FileStrategy extends StrategyStore {
 
-  constructor(path) {
+  constructor(path, limit = Infinity) {
     super();
     this._path = path;
+    this._limit = limit;
   }
 
   static getFileName(userId) {
@@ -106,6 +107,10 @@ class FileStrategy extends StrategyStore {
     return path.join(this._path, filename);
   }
 
+  isExceedLimit(store) {
+    return store.length >= this._limit;
+  }
+
   async userConfigurationCount(userId) {
     if (!this.wasExistedStore(userId)) {
       return 0;
@@ -157,6 +162,10 @@ class FileStrategy extends StrategyStore {
       store = await this.getStore(userId);
     } else {
       store = FileStrategy.makeStoreDefault();
+    }
+
+    if(this.isExceedLimit(store)){
+      throw new Error('Exceed Limit Configuarion Each File');
     }
 
     store = FileStrategy.appendConfiguration(store, configuration.getConfig());

@@ -44,6 +44,18 @@ class Enviroment {
 
     throw new Error(message);
   }
+
+  static getFileLimitConfiguration(){
+
+    if (process.env.STORE_TYPE === StoreTypes.FILE) {
+      return process.env.FILE_LIMIT_CONFIGURATION;
+    }
+
+    const message = `Enviroment is using Storage Type: 
+                    "${process.env.STORE_TYPE}", not "file"`;
+
+    throw new Error(message);
+  }
 }
 
 module.exports = {

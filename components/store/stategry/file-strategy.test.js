@@ -8,7 +8,8 @@ const UserID = {
   INSERT_NOT_EXISTED: 2,
   INSERT_EXISTED: 3,
   DELETE: 4,
-  UPDATE: 5
+  UPDATE: 5,
+  INSERT_LIMITED: 6
 };
 
 
@@ -224,6 +225,32 @@ describe('File Strategy Test', () => {
       const id = await fileStrategy.insert(properties);
 
       expect(id).toEqual(1);
+    });
+
+
+    it('can return id of configuration appended', async () => {
+      const limit = 1;
+      const fileStrategy = new FileStrategy(root, limit);
+      const now = Date.now();
+      const properties = {
+        _userId: UserID.INSERT_LIMITED,
+        time: now,
+        isDelete: false
+      };
+
+      const store = {
+        length: 1,
+        lastIndex: 1,
+        data: [
+          {
+            _id: 0
+          }
+        ]
+      }
+      createFile(root, UserID.INSERT_LIMITED, store);
+
+      const message = 'Exceed Limit Configuarion Each File';
+      await expect(fileStrategy.insert(properties)).rejects.toThrowError(message);
     });
   });
 
