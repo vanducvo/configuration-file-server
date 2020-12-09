@@ -2,10 +2,10 @@ const StoreTypes = {
   FILE: 'file',
   MYSQL: 'mysql',
   MONGODB: 'mongodb',
-  getAllStoreType(){
+  getAllStoreType() {
     return Object.keys(this);
   },
-  isValid(type){
+  isValid(type) {
     const existsType = Object.values(this);
     return existsType.includes(type);
   }
@@ -27,10 +27,10 @@ Object.defineProperties(StoreTypes, {
 class Enviroment {
   static getStoreType() {
     const type = process.env.STORE_TYPE;
-    if(StoreTypes.isValid(type)){
+    if (StoreTypes.isValid(type)) {
       return process.env.STORE_TYPE;
     }
-    
+
     throw new Error(`Store Type Invalid, it must in ${StoreTypes}`);
   }
 
@@ -45,7 +45,7 @@ class Enviroment {
     throw new Error(message);
   }
 
-  static getFileLimitConfiguration(){
+  static getFileLimitConfiguration() {
 
     if (process.env.STORE_TYPE === StoreTypes.FILE) {
       return process.env.FILE_LIMIT_CONFIGURATION;
@@ -53,6 +53,18 @@ class Enviroment {
 
     const message = `Enviroment is using Storage Type: 
                     "${process.env.STORE_TYPE}", not "file"`;
+
+    throw new Error(message);
+  }
+
+  static getMySQLURI() {
+
+    if (process.env.STORE_TYPE === StoreTypes.MYSQL) {
+      return process.env.MYSQL_URI;
+    }
+
+    const message = `Enviroment is using Storage Type: 
+                    "${process.env.STORE_TYPE}", not "MYSQL"`;
 
     throw new Error(message);
   }
