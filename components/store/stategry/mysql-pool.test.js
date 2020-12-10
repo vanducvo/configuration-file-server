@@ -1,5 +1,5 @@
 const { StoreTypes } = require('../enviroment/index.js');
-const MySQLConnection = require('./mysql-connection.js');
+const MySQLPool = require('./mysql-pool.js');
 
 describe('MySQL connection', () => {
 
@@ -9,7 +9,7 @@ describe('MySQL connection', () => {
     jest.resetModules();
     process.env = { ...OLD_ENV };
     setEnviromentStoreType(StoreTypes.MYSQL);
-    const uri = 'mysql://configuration:88888888@localhost:3306/configuration';
+    const uri = 'mysql://configuration:88888888@localhost:3306/configuration_test';
     setEnviromentMySQLURI(uri);
   });
 
@@ -18,47 +18,47 @@ describe('MySQL connection', () => {
   });
 
   afterAll(async () => {
-    await MySQLConnection.close();
+    await MySQLPool.close();
   });
 
 
   it('should false when not yet get connect', async () => {
-    await MySQLConnection.close();
+    await MySQLPool.close();
 
-    const isConnected = MySQLConnection.isConnected();
+    const isConnected = MySQLPool.isConnected();
 
     expect(isConnected).toBeFalsy();
   });
 
   it('can connect safe and should true when got connect', async () => {
-    await MySQLConnection.connect();
-    await MySQLConnection.connect();
+    await MySQLPool.connect();
+    await MySQLPool.connect();
 
-    const isConnected = MySQLConnection.isConnected();
+    const isConnected = MySQLPool.isConnected();
 
     expect(isConnected).toBeTruthy();
   });
 
   it('can disconnect safe', async () => {
-    await MySQLConnection.close();
-    await MySQLConnection.close();
+    await MySQLPool.close();
+    await MySQLPool.close();
 
-    expect(MySQLConnection.isConnected()).toBeFalsy();
+    expect(MySQLPool.isConnected()).toBeFalsy();
   });
 
   it('can get connect when connected', async () => {
-    await MySQLConnection.connect();
+    await MySQLPool.connect();
 
-    const connection = await MySQLConnection.get();
+    const pool = await MySQLPool.get();
 
-    expect(connection).not.toBeNull();
+    expect(pool).not.toBeNull();
   });
 
   it('can get when disconnected', async () => {
-    await MySQLConnection.close();
-    const connection = await MySQLConnection.get();
+    await MySQLPool.close();
+    const pool = await MySQLPool.get();
 
-    expect(connection).not.toBeNull();
+    expect(pool).not.toBeNull();
   });
 });
 

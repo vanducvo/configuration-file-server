@@ -1,7 +1,7 @@
 const mysql = require('mysql2/promise');
 const { Enviroment } = require('../enviroment');
 
-class MySQLConnection {
+class MySQLPool {
 
   constructor() {
     this.db = null;
@@ -12,7 +12,7 @@ class MySQLConnection {
       const configuration = {
         uri: Enviroment.getMySQLURI()
       };
-      this.db = await mysql.createConnection(configuration);
+      this.db = await mysql.createPool(configuration);
     }
 
     return this.db;
@@ -20,7 +20,7 @@ class MySQLConnection {
 
   async get() {
     if (!this.isConnected()) {
-      return await this.connect();
+      await this.connect();
     }
 
     return this.db;
@@ -44,4 +44,4 @@ class MySQLConnection {
   }
 }
 
-module.exports = new MySQLConnection();
+module.exports = new MySQLPool();
