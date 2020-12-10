@@ -13,9 +13,10 @@ const Assignment = require('../../dto/assignment.js');
 
 class FileStrategy extends StrategyStore {
 
-  constructor(path) {
+  constructor(path, limit = Infinity) {
     super();
     this._path = path;
+    this._limit = limit;
   }
 
   static getFileName(userId) {
@@ -25,7 +26,6 @@ class FileStrategy extends StrategyStore {
   static decode(buffer) {
     return v8.deserialize(buffer);
   }
-
 
   static encode(store) {
     return v8.serialize(store);
@@ -74,6 +74,29 @@ class FileStrategy extends StrategyStore {
     };
   }
 
+  static updatedConfigurations(_store, assignment, condition) {
+    const store = v8.deserialize(v8.serialize(_store));
+    const configurations = store.data;
+
+    let updatedConfigurations = [];
+    for (let i = 0; i < configurations.length; i++) {
+      const isMatch = condition.checkWith(configurations[i]);
+      if (isMatch) {
+        try {
+          configurations[i] = assignment.apply(configurations[i]);
+          updatedConfigurations.push(configurations[i]);
+        } catch (exception) {
+          //Ignore
+        }
+      }
+    }
+
+    return {
+      newStore: store,
+      updatedConfigurations
+    };
+  }
+
   wasExistedStore(userId) {
     const filename = FileStrategy.getFileName(userId);
     const filePath = this.getFilePath(filename);
@@ -82,6 +105,10 @@ class FileStrategy extends StrategyStore {
 
   getFilePath(filename) {
     return path.join(this._path, filename);
+  }
+
+  isExceedLimit(store) {
+    return store.length >= this._limit;
   }
 
   async userConfigurationCount(userId) {
@@ -137,6 +164,10 @@ class FileStrategy extends StrategyStore {
       store = FileStrategy.makeStoreDefault();
     }
 
+    if(this.isExceedLimit(store)){
+      throw new Error('Exceed Limit Configuarion Each File');
+    }
+
     store = FileStrategy.appendConfiguration(store, configuration.getConfig());
     const id = store.lastIndex - 1;
 
@@ -159,29 +190,6 @@ class FileStrategy extends StrategyStore {
     await this.saveStore(condition.getUserId(), newStore);
 
     return updatedConfigurations;
-  }
-
-  static updatedConfigurations(_store, assignment, condition) {
-    const store = v8.deserialize(v8.serialize(_store));
-    const configurations = store.data;
-
-    let updatedConfigurations = [];
-    for (let i = 0; i < configurations.length; i++) {
-      const isMatch = condition.checkWith(configurations[i]);
-      if (isMatch) {
-        try {
-          configurations[i] = assignment.apply(configurations[i]);
-          updatedConfigurations.push(configurations[i]);
-        } catch (exception) {
-          //Ignore
-        }
-      }
-    }
-
-    return {
-      newStore: store,
-      updatedConfigurations
-    };
   }
 
   async delete(_condition) {

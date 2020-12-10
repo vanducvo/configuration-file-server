@@ -1,0 +1,23 @@
+CREATE DATABASE IF NOT EXISTS configuration;
+
+USE configuration;
+
+CREATE TABLE IF NOT EXISTS user
+(
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    username NVARCHAR(50) NOT NULL UNIQUE,
+    password NVARCHAR(100) NOT NULL
+);
+
+
+CREATE TABLE IF NOT EXISTS configuration (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    name NVARCHAR(50),
+    data JSON,
+    user_id INT NOT NULL,
+    FOREIGN KEY 
+		(user_id) 
+    REFERENCES user(id) 
+    ON UPDATE CASCADE 
+    ON DELETE RESTRICT
+);

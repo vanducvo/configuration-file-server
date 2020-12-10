@@ -13,7 +13,7 @@ describe('Enviroment Components', () => {
     process.env = { ...OLD_ENV };
   });
 
-  afterAll(() => {
+  afterEach(() => {
     process.env = OLD_ENV;
   });
 
@@ -37,7 +37,7 @@ describe('Enviroment Components', () => {
 
 
 
-  it('should have get file path (valid)', () => {
+  it('can get file path (valid)', () => {
     setEnviromentStoreType(StoreTypes.FILE);
     
     setEnviromentFilePath(path);
@@ -47,14 +47,51 @@ describe('Enviroment Components', () => {
     expect(storeType).toEqual(path);
   });
 
-  it('should have get file path (invalid)', () => {
+  it('can get file path (invalid)', () => {
     setEnviromentStoreType(StoreTypes.MYSQL);
 
     setEnviromentFilePath(path);
 
     expect(() => Enviroment.getFilePath()).toThrowError();
   });
+
+    it('can get file limit configurations', () => {
+      setEnviromentStoreType(StoreTypes.FILE);
+
+      const limit = 100000;
+      setEnviromentFileLimitConfiguration(limit);
+
+      expect(Enviroment.getFileLimitConfiguration()).toEqual(100000);
+    });
+
+    it('should throw error if Store type no equal FILE', () => {
+      setEnviromentStoreType(StoreTypes.MONGODB);
+
+      expect(() => Enviroment.getFileLimitConfiguration()).toThrowError()
+    });
+
+    it('can get MySQL URL CONNECTION', () => {
+      setEnviromentStoreType(StoreTypes.MYSQL)
+      const uri = 'mysql://configuration:88888888@localhost:3306/configuration';
+      setEnviromentMySQLURI(uri);
+
+      expect(Enviroment.getMySQLURI()).toEqual(uri)
+    });
+
+    it('should throw error when get MYSQL URI when type is not MYSQL', () => {
+      setEnviromentStoreType(StoreTypes.MONGODB);
+
+      expect(() => Enviroment.getMySQLURI()).toThrowError()
+    });
 });
+
+function setEnviromentMySQLURI(uri) {
+  process.env.MYSQL_URI = uri;
+}
+
+function setEnviromentFileLimitConfiguration(limit) {
+  process.env.FILE_LIMIT_CONFIGURATION = limit;
+}
 
 function setEnviromentFilePath(path) {
   process.env.FILE_PATH = path;

@@ -1,15 +1,15 @@
 class StrategyStore {
-  select(condition) {
-    throw new Error('Method Not Implmentent!');
+  async select(_condition) {
+    throw new Error(`Method ${this.select.name} Not Implmentent!`);
   }
-  insert(configuration) {
-    throw new Error('Method Not Implmentent!');
+  async insert(_configuration) {
+    throw new Error(`Method ${this.insert.name} Not Implmentent!`);
   }
-  update(assignments, condition) {
-    throw new Error('Method Not Implmentent!');
+  async update(_assignment, _condition) {
+    throw new Error(`Method ${this.update.name} Not Implmentent!`);
   }
-  delete(condition) {
-    throw new Error('Method Not Implmentent!');
+  async delete(_condition) {
+    throw new Error(`Method ${this.delete.name} Not Implmentent!`);
   }
 }
 
