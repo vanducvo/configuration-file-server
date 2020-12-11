@@ -19,7 +19,8 @@ class Assignment {
   static isObject(properties) {
     return properties 
       && typeof (properties) === 'object'
-      && properties.constructor.name === 'Object';
+      && properties.constructor.name === 'Object'
+      && Object.keys(properties).length > 0;
   }
 
   static deepClone(json) {
@@ -34,9 +35,8 @@ class Assignment {
     }
 
     const context = Assignment.deepClone(_context);
-    const nameOfProperties = Object.getOwnPropertyNames(this._properties);
-    
-    for(let propertyName of nameOfProperties){
+
+    for(let propertyName in this._properties){
       if(propertyName in context){
         if(this._properties[propertyName] === undefined){
           delete context[propertyName];
@@ -50,6 +50,18 @@ class Assignment {
     }
     
     return context;
+  }
+
+  toSQL(jsonName){
+    let code = `${jsonName} = JSON_REPLACE(${jsonName}`;
+    let params = [];
+    for(let propertyName in this._properties){
+      code += `, "$.${propertyName}", ?`;
+      params.push(this._properties[propertyName]);
+    }
+
+    code += ')';
+    return {code, params};
   }
 
   getClassName() {

@@ -1,8 +1,18 @@
-CREATE DATABASE IF NOT EXISTS configuration;
+DROP DATABASE IF EXISTS configuration;
+CREATE DATABASE configuration;
+
+DROP USER IF EXISTS configuration;
+CREATE USER 'configuration'@'%' 
+IDENTIFIED WITH mysql_native_password 
+BY '88888888';
+
+GRANT ALL PRIVILEGES 
+ON configuration.* 
+TO 'configuration'@'%';
 
 USE configuration;
 
-CREATE TABLE IF NOT EXISTS user
+CREATE TABLE user
 (
 	id INT AUTO_INCREMENT PRIMARY KEY,
     username NVARCHAR(50) NOT NULL UNIQUE,
@@ -10,9 +20,8 @@ CREATE TABLE IF NOT EXISTS user
 );
 
 
-CREATE TABLE IF NOT EXISTS configuration (
+CREATE TABLE configuration (
 	id INT AUTO_INCREMENT PRIMARY KEY,
-    name NVARCHAR(50),
     data JSON,
     user_id INT NOT NULL,
     FOREIGN KEY 
