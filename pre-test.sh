@@ -3,6 +3,7 @@
 if ! command -v mysql  &> /dev/null
 then
   echo 'Must Have MYSQL client';
+  exit;
 fi
 
 echo 'RUN WITH ROOT MYSQL';
