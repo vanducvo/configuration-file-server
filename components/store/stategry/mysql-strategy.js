@@ -100,6 +100,25 @@ class MySQLStrategy {
     const updatedCondition = { ..._condition, ..._assignment };
     return this.select(updatedCondition);
   }
+
+  async delete(_condition) {
+    const condition = new Condition(_condition);
+
+    const { query, params } = this.createDeleteQuery(condition, _condition);
+
+    const results = this.select(_condition);
+    await this.execute(query, params);
+
+    return results;
+  }
+
+  createDeleteQuery(condition) {
+    const sql = condition.toSQL('data');
+
+    const query = 'DELETE FROM configuration WHERE ' + sql.code;
+
+    return { query, params: sql.params };
+  }
 }
 
 module.exports = MySQLStrategy;

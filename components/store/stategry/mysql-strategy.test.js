@@ -9,7 +9,8 @@ const UserID = {
   SELECT: 3,
   INSERT: 4,
   DELETE: 5,
-  UPDATE: 6
+  UPDATE: 6,
+  DELETE: 7
 };
 
 describe('MySQL Strategy', () => {
@@ -40,11 +41,13 @@ describe('MySQL Strategy', () => {
     process.env = OLD_ENV;
   });
 
+
   it('can create instance with connection', async () => {
     const pool = await MySQLPool.get();
 
     expect(new MySQLStrategy(pool)).toBeInstanceOf(MySQLStrategy);
   });
+
 
   it('can find number of user configuration (empty)', async () => {
     const pool = await MySQLPool.get();
@@ -56,6 +59,7 @@ describe('MySQL Strategy', () => {
 
     expect(n).toEqual(0);
   });
+
 
   it('can find number of user configuration', async () => {
     const pool = await MySQLPool.get();
@@ -72,8 +76,6 @@ describe('MySQL Strategy', () => {
       )
     };
 
-
-
     await insertConfigurationForUser(pool, configuration);
 
     const mySQLStrategy = new MySQLStrategy(pool);
@@ -82,6 +84,7 @@ describe('MySQL Strategy', () => {
 
     expect(n).toEqual(1);
   });
+
 
   it('should be empty array if not have configuration', async () => {
     const pool = await MySQLPool.get();
@@ -94,6 +97,7 @@ describe('MySQL Strategy', () => {
 
     expect(userConfigurations).toHaveLength(0);
   });
+
 
   it('can select all configuration of user', async () => {
     const pool = await MySQLPool.get();
@@ -116,6 +120,7 @@ describe('MySQL Strategy', () => {
 
     expect(userConfigurations).toHaveLength(1);
   });
+
 
   it('can select configuration of by property', async () => {
     const pool = await MySQLPool.get();
@@ -141,6 +146,7 @@ describe('MySQL Strategy', () => {
     expect(userConfigurations).toHaveLength(2);
   });
 
+
   it('can insert configuration', async () => {
     const pool = await MySQLPool.get();
 
@@ -160,6 +166,7 @@ describe('MySQL Strategy', () => {
 
     expect(Number.isInteger(id)).toBeTruthy();
   });
+
 
   it('can update configuration', async () => {
     const pool = await MySQLPool.get();
@@ -188,7 +195,10 @@ describe('MySQL Strategy', () => {
     const mySQLStrategy = new MySQLStrategy(pool);
     const updatedConfigurations = await mySQLStrategy.update(assignment, condition);
 
+    const checker = await mySQLStrategy.select({...condition, ...assignment});
     expect(updatedConfigurations).toHaveLength(1);
+    expect(checker[0].name).toEqual('sudoers');
+    expect(checker[0].age).toEqual(18);
   });
 
   it('should return [] of not match', async () => {
@@ -210,6 +220,34 @@ describe('MySQL Strategy', () => {
     expect(updatedConfigurations).toHaveLength(0);
   });
 
+  it('should delete configuration', async() => {
+    const pool = await MySQLPool.get();
+    const configuration = {
+      userId: UserID.DELETE,
+      data: JSON.stringify(
+        {
+          name: 'profiles-delete-1',
+          age: 30
+        }
+      )
+    };
+
+    await insertConfigurationForUser(pool, configuration);
+
+    const mySQLStrategy = new MySQLStrategy(pool);
+
+    const condition = {
+      _userId: UserID.DELETE,
+      name: 'profiles-delete-1'
+    };
+
+    const response = await mySQLStrategy.delete(condition);
+
+    const checker = await mySQLStrategy.select(condition);
+
+    expect(response).toHaveLength(1);
+    expect(checker).toHaveLength(0);
+  });
 });
 
 async function createDefaultUsers(pool) {

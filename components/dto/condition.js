@@ -46,7 +46,13 @@ class Condition {
     let params = [this._userId];
 
     for(const propertyname in this._properties){
-      code += ` AND ${jsonName}->"$.${propertyname}" = ?`;
+      if(propertyname === '_id'){
+        code += ` AND id = ?`;
+      } else {
+        code += ` AND ${jsonName}->"$.${propertyname}" = ?`;
+      }
+
+      
       params.push(this._properties[propertyname]);
     }
 
