@@ -8,7 +8,7 @@ describe('Change Class', () => {
   });
 
   it('should throw error when invalid properties', () => {
-    const invalidProperties = [1, 1.1, '1.1', null, NaN, undefined, { _id: 0 }];
+    const invalidProperties = [1, 1.1, '1.1', null, NaN, undefined, { _id: 0 }, {}];
 
     let message = Assignment.name +
       ': properties is object and _id is immutable';
@@ -83,6 +83,22 @@ describe('Change Class', () => {
     expect(() => {
       assignment.apply(context);
     }).toThrowError(message);
+  });
+
+  it('can tranforms assignments to SQL code', () => {
+    const properties = {
+      name: 'sudoers',
+      age: 10
+    };
+
+    const assignment = new Assignment(
+      properties
+    );
+
+    const sql = assignment.toSQL('data');
+
+    expect(sql.code).toEqual('data = JSON_REPLACE(data, "$.name", ?, "$.age", ?)');
+    expect(sql.params).toEqual(['sudoers', 10]);
   });
 
 });

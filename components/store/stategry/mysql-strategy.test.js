@@ -9,6 +9,7 @@ const UserID = {
   SELECT: 3,
   INSERT: 4,
   DELETE: 5,
+  UPDATE: 6
 };
 
 describe('MySQL Strategy', () => {
@@ -158,6 +159,55 @@ describe('MySQL Strategy', () => {
     const id = await mySQLStrategy.insert(configuration);
 
     expect(Number.isInteger(id)).toBeTruthy();
+  });
+
+  it('can update configuration', async () => {
+    const pool = await MySQLPool.get();
+    const configuration = {
+      userId: UserID.UPDATE,
+      data: JSON.stringify(
+        {
+          name: 'profiles-update-1',
+          age: 30
+        }
+      )
+    };
+
+    await insertConfigurationForUser(pool, configuration);
+
+    const assignment = {
+      name: 'sudoers',
+      age: 18
+    };
+
+    const condition = {
+      _userId: UserID.UPDATE,
+      name: 'profiles-update-1',
+    };
+
+    const mySQLStrategy = new MySQLStrategy(pool);
+    const updatedConfigurations = await mySQLStrategy.update(assignment, condition);
+
+    expect(updatedConfigurations).toHaveLength(1);
+  });
+
+  it('should return [] of not match', async () => {
+    const pool = await MySQLPool.get();
+    
+    const assignment = {
+      name: 'sudoers',
+      age: 18
+    };
+
+    const condition = {
+      _userId: UserID.EMPTY,
+      name: 'profiles-update-1',
+    };
+
+    const mySQLStrategy = new MySQLStrategy(pool);
+    const updatedConfigurations = await mySQLStrategy.update(assignment, condition);
+
+    expect(updatedConfigurations).toHaveLength(0);
   });
 
 });
