@@ -1,9 +1,11 @@
 const Assignment = require("../../dto/assignment");
 const Condition = require("../../dto/condition");
 const Configuration = require("../../dto/configuration");
+const StrategyStore = require('./strategy-store.js');
 
-class MySQLStrategy {
+class MySQLStrategy extends StrategyStore {
   constructor(pool) {
+    super();
     this._pool = pool;
   }
 
