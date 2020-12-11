@@ -28,3 +28,7 @@ else
   echo 'create table configuration of configuration_test';
   mysql -uroot -p configuration_test -e 'source ./scripts/test/create-table-configuration.sql'
 fi
+
+
+echo 'create env file';
+cp example.env.test .env.test
