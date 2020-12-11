@@ -40,6 +40,18 @@ class Condition {
 
     return true;
   }
+
+  toSQL(jsonName){
+    let code = 'user_id = ?';
+    let params = [this._userId];
+
+    for(const propertyname in this._properties){
+      code += ` AND ${jsonName}->"$.${propertyname}" = ?`;
+      params.push(this._properties[propertyname]);
+    }
+
+    return {code, params};
+  }
 }
 
 module.exports = Condition;

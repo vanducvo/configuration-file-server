@@ -58,4 +58,30 @@ describe('Condition', () => {
       }).toThrowError(message);
     }
   });
+
+  it('can change User Id to SQL condition code', () => {
+      const properties = {
+        _userId: 0
+      }
+
+      const condition = new Condition(properties);
+      const code = 'user_id = ?';
+      const sql = condition.toSQL('data');
+      expect(sql.code).toEqual(code);
+      expect(sql.params).toEqual([0]);
+  });
+
+  it('can change condition to SQL condition code', () => {
+    const properties = {
+      _userId: 0,
+      name: 'brew',
+      age: 30
+    }
+
+    const condition = new Condition(properties);
+    const code = 'user_id = ? AND data->"$.name" = ? AND data->"$.age" = ?';
+    const sql = condition.toSQL('data');
+    expect(sql.code).toEqual(code);
+    expect(sql.params).toEqual([0, 'brew', 30]);
+});
 });

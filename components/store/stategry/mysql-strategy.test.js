@@ -5,7 +5,8 @@ const fs = require('fs');
 
 const UserID = {
   EMPTY: 1,
-  COMMON: 2
+  COMMON: 2,
+  SELECT: 3
 };
 
 describe('MySQL Strategy', () => {
@@ -60,14 +61,15 @@ describe('MySQL Strategy', () => {
     await deleteUserConfigurations(pool, UserID.COMMON);
     const configuration = {
       userId: UserID.COMMON,
-      name: 'profiles',
       data: JSON.stringify(
         {
-          name: 'sudoers',
+          name: 'profiles-common',
           age: 30
         }
       )
     };
+
+
 
     await insertConfigurationForUser(pool, configuration);
 
@@ -78,6 +80,51 @@ describe('MySQL Strategy', () => {
     expect(n).toEqual(1);
   });
 
+  it('can select all configuration of user', async () => {
+    const pool = await MySQLPool.get();
+
+    await deleteUserConfigurations(pool, UserID.SELECT);
+    const configuration = {
+      userId: UserID.SELECT,
+      data: JSON.stringify(
+        {
+          name: 'profiles-select-0',
+          age: 30
+        }
+      )
+    };
+
+    await insertConfigurationForUser(pool, configuration);
+    const mySQLStrategy = new MySQLStrategy(pool);
+    const condition = { _userId: UserID.SELECT };
+    const userConfigurations = await mySQLStrategy.select(condition);
+
+    expect(userConfigurations).toHaveLength(1);
+  });
+
+  it('can select configuration of by property', async () => {
+    const pool = await MySQLPool.get();
+
+    await deleteUserConfigurations(pool, UserID.SELECT);
+    const configuration = {
+      userId: UserID.SELECT,
+      data: JSON.stringify(
+        {
+          name: 'profiles-select-1',
+          age: 30
+        }
+      )
+    };
+
+    await insertConfigurationForUser(pool, configuration);
+    await insertConfigurationForUser(pool, configuration);
+
+    const mySQLStrategy = new MySQLStrategy(pool);
+    const condition = { _userId: UserID.SELECT, name: 'profiles-select-1' };
+    const userConfigurations = await mySQLStrategy.select(condition);
+
+    expect(userConfigurations).toHaveLength(2);
+  });
 });
 
 async function createDefaultUsers(pool) {
@@ -114,9 +161,8 @@ async function createTable(pool, name) {
 async function insertConfigurationForUser(pool, configuration) {
   const connection = await pool.getConnection();
   
-  const stmt = 'INSERT INTO configuration (name, data, user_id) VALUES (?, ?, ?)';
+  const stmt = 'INSERT INTO configuration (data, user_id) VALUES (?, ?)';
   await connection.query(stmt, [
-    configuration.name,
     configuration.data,
     configuration.userId
   ]);
