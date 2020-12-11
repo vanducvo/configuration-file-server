@@ -20,7 +20,7 @@ describe('MySQL Strategy', () => {
     jest.resetModules();
     process.env = { ...OLD_ENV };
     setEnviromentStoreType(StoreTypes.MYSQL);
-    const uri = 'mysql://configuration:88888888@localhost:3306/configuration_test';
+    const uri = process.env.MYSQL_URI;
     setEnviromentMySQLURI(uri);
 
     // Users Prepares
