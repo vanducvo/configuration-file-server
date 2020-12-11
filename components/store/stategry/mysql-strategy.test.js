@@ -6,7 +6,9 @@ const fs = require('fs');
 const UserID = {
   EMPTY: 1,
   COMMON: 2,
-  SELECT: 3
+  SELECT: 3,
+  INSERT: 4,
+  DELETE: 5,
 };
 
 describe('MySQL Strategy', () => {
@@ -24,10 +26,10 @@ describe('MySQL Strategy', () => {
 
     await deleteTable(pool, 'configuration');
     await deleteTable(pool, 'user');
-    await createTable(pool ,'user');
+    await createTable(pool, 'user');
 
     await Promise.all([
-      createTable(pool ,'configuration'),
+      createTable(pool, 'configuration'),
       createDefaultUsers(pool)
     ]);
   });
@@ -57,7 +59,7 @@ describe('MySQL Strategy', () => {
   it('can find number of user configuration', async () => {
     const pool = await MySQLPool.get();
 
-    
+
     await deleteUserConfigurations(pool, UserID.COMMON);
     const configuration = {
       userId: UserID.COMMON,
@@ -76,8 +78,20 @@ describe('MySQL Strategy', () => {
     const mySQLStrategy = new MySQLStrategy(pool);
 
     const n = await mySQLStrategy.userConfigurationCount(UserID.COMMON);
-  
+
     expect(n).toEqual(1);
+  });
+
+  it('should be empty array if not have configuration', async () => {
+    const pool = await MySQLPool.get();
+    const mySQLStrategy = new MySQLStrategy(pool);
+
+    await deleteUserConfigurations(pool, UserID.EMPTY);
+
+    const condition = { _userId: UserID.EMPTY, a: 2 };
+    const userConfigurations = await mySQLStrategy.select(condition);
+
+    expect(userConfigurations).toHaveLength(0);
   });
 
   it('can select all configuration of user', async () => {
@@ -125,15 +139,36 @@ describe('MySQL Strategy', () => {
 
     expect(userConfigurations).toHaveLength(2);
   });
+
+  it('can insert configuration', async () => {
+    const pool = await MySQLPool.get();
+
+    await deleteUserConfigurations(pool, UserID.INSERT);
+    const configuration = {
+      _userId: UserID.INSERT,
+      name: {
+        firstname: 'profiles-select-2',
+        lastname: 'nani'
+      },
+      age: 30
+    };
+
+
+    const mySQLStrategy = new MySQLStrategy(pool);
+    const id = await mySQLStrategy.insert(configuration);
+
+    expect(Number.isInteger(id)).toBeTruthy();
+  });
+
 });
 
 async function createDefaultUsers(pool) {
   for (let username in UserID) {
     let connection = await pool.getConnection();
-    
+
     const query = 'INSERT INTO user(id, username, password) VALUES (?,?,?)';
     await connection.query(query, [UserID[username], username, '']);
-    
+
     connection.release();
   }
 }
@@ -149,7 +184,7 @@ async function deleteTable(pool, name) {
 
 async function createTable(pool, name) {
   let connection = await pool.getConnection();
-  
+
   const path = `./scripts/test/create-table-${name}.sql`;
   const buffer = fs.readFileSync(path);
   const stmt = buffer.toString();
@@ -160,7 +195,7 @@ async function createTable(pool, name) {
 
 async function insertConfigurationForUser(pool, configuration) {
   const connection = await pool.getConnection();
-  
+
   const stmt = 'INSERT INTO configuration (data, user_id) VALUES (?, ?)';
   await connection.query(stmt, [
     configuration.data,
@@ -172,7 +207,7 @@ async function insertConfigurationForUser(pool, configuration) {
 
 async function deleteUserConfigurations(pool, userId) {
   const connection = await pool.getConnection();
-  
+
   const stmt = 'DELETE FROM configuration WHERE user_id = ?';
   await connection.query(stmt, [userId]);
 
