@@ -8,7 +8,6 @@ fi
 
 echo 'RUN WITH ROOT MYSQL';
 
-echo 'create user';
 if [ -z "$1" ]
 then
   echo 'create user';
