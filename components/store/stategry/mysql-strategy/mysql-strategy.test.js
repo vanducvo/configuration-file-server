@@ -1,4 +1,3 @@
-const { StoreTypes } = require('../../enviroment/index.js');
 const MySQLPool = require('./mysql-pool.js');
 const MySQLStrategy = require('./mysql-strategy.js');
 const fs = require('fs');
@@ -14,46 +13,34 @@ const UserID = {
 };
 
 describe('MySQL Strategy', () => {
-  const OLD_ENV = process.env;
+  const uri = getSQLURIFromEnviroment();
 
   beforeAll(async () => {
-    jest.resetModules();
-    process.env = { ...OLD_ENV };
-    setEnviromentStoreType(StoreTypes.MYSQL);
-    const uri = process.env.MYSQL_URI;
-    setEnviromentMySQLURI(uri);
 
-    // Users Prepares
-    const pool = await MySQLPool.get();
-
-    await deleteTable(pool, 'configuration');
-    await deleteTable(pool, 'user');
-    await createTable(pool, 'user');
+    await deleteTable('configuration');
+    await deleteTable('user');
+    await createTable('user');
 
     await Promise.all([
-      createTable(pool, 'configuration'),
-      createDefaultUsers(pool)
+      createTable('configuration'),
+      createDefaultUsers()
     ]);
   });
 
   afterAll(() => {
     MySQLPool.close();
-    process.env = OLD_ENV;
   });
 
 
   it('can create instance with connection', async () => {
-    const pool = await MySQLPool.get();
-
-    expect(new MySQLStrategy(pool)).toBeInstanceOf(MySQLStrategy);
+    expect(new MySQLStrategy(uri)).toBeInstanceOf(MySQLStrategy);
   });
 
 
   it('can find number of user configuration (empty)', async () => {
-    const pool = await MySQLPool.get();
 
-    await deleteUserConfigurations(pool, UserID.EMPTY);
-    const mySQLStrategy = new MySQLStrategy(pool);
+    await deleteUserConfigurations(UserID.EMPTY);
+    const mySQLStrategy = new MySQLStrategy(uri);
 
     const n = await mySQLStrategy.userConfigurationCount(UserID.EMPTY);
 
@@ -62,10 +49,7 @@ describe('MySQL Strategy', () => {
 
 
   it('can find number of user configuration', async () => {
-    const pool = await MySQLPool.get();
-
-
-    await deleteUserConfigurations(pool, UserID.COMMON);
+    await deleteUserConfigurations(UserID.COMMON);
     const configuration = {
       userId: UserID.COMMON,
       data: JSON.stringify(
@@ -76,9 +60,9 @@ describe('MySQL Strategy', () => {
       )
     };
 
-    await insertConfigurationForUser(pool, configuration);
+    await insertConfigurationForUser(configuration);
 
-    const mySQLStrategy = new MySQLStrategy(pool);
+    const mySQLStrategy = new MySQLStrategy(uri);
 
     const n = await mySQLStrategy.userConfigurationCount(UserID.COMMON);
 
@@ -87,10 +71,9 @@ describe('MySQL Strategy', () => {
 
 
   it('should be empty array if not have configuration', async () => {
-    const pool = await MySQLPool.get();
-    const mySQLStrategy = new MySQLStrategy(pool);
+    const mySQLStrategy = new MySQLStrategy(uri);
 
-    await deleteUserConfigurations(pool, UserID.EMPTY);
+    await deleteUserConfigurations(UserID.EMPTY);
 
     const condition = { _userId: UserID.EMPTY, a: 2 };
     const userConfigurations = await mySQLStrategy.select(condition);
@@ -102,7 +85,7 @@ describe('MySQL Strategy', () => {
   it('can select all configuration of user', async () => {
     const pool = await MySQLPool.get();
 
-    await deleteUserConfigurations(pool, UserID.SELECT);
+    await deleteUserConfigurations(UserID.SELECT);
     const configuration = {
       userId: UserID.SELECT,
       data: JSON.stringify(
@@ -113,8 +96,8 @@ describe('MySQL Strategy', () => {
       )
     };
 
-    await insertConfigurationForUser(pool, configuration);
-    const mySQLStrategy = new MySQLStrategy(pool);
+    await insertConfigurationForUser(configuration);
+    const mySQLStrategy = new MySQLStrategy(uri);
     const condition = { _userId: UserID.SELECT };
     const userConfigurations = await mySQLStrategy.select(condition);
 
@@ -123,9 +106,8 @@ describe('MySQL Strategy', () => {
 
 
   it('can select configuration of by property', async () => {
-    const pool = await MySQLPool.get();
 
-    await deleteUserConfigurations(pool, UserID.SELECT);
+    await deleteUserConfigurations(UserID.SELECT);
     const configuration = {
       userId: UserID.SELECT,
       data: JSON.stringify(
@@ -136,10 +118,10 @@ describe('MySQL Strategy', () => {
       )
     };
 
-    await insertConfigurationForUser(pool, configuration);
-    await insertConfigurationForUser(pool, configuration);
+    await insertConfigurationForUser(configuration);
+    await insertConfigurationForUser(configuration);
 
-    const mySQLStrategy = new MySQLStrategy(pool);
+    const mySQLStrategy = new MySQLStrategy(uri);
     const condition = { _userId: UserID.SELECT, name: 'profiles-select-1' };
     const userConfigurations = await mySQLStrategy.select(condition);
 
@@ -148,9 +130,8 @@ describe('MySQL Strategy', () => {
 
 
   it('can insert configuration', async () => {
-    const pool = await MySQLPool.get();
 
-    await deleteUserConfigurations(pool, UserID.INSERT);
+    await deleteUserConfigurations(UserID.INSERT);
     const configuration = {
       _userId: UserID.INSERT,
       name: {
@@ -161,7 +142,7 @@ describe('MySQL Strategy', () => {
     };
 
 
-    const mySQLStrategy = new MySQLStrategy(pool);
+    const mySQLStrategy = new MySQLStrategy(uri);
     const id = await mySQLStrategy.insert(configuration);
 
     expect(Number.isInteger(id)).toBeTruthy();
@@ -169,7 +150,6 @@ describe('MySQL Strategy', () => {
 
 
   it('can update configuration', async () => {
-    const pool = await MySQLPool.get();
     const configuration = {
       userId: UserID.UPDATE,
       data: JSON.stringify(
@@ -180,7 +160,7 @@ describe('MySQL Strategy', () => {
       )
     };
 
-    await insertConfigurationForUser(pool, configuration);
+    await insertConfigurationForUser(configuration);
 
     const assignment = {
       name: 'sudoers',
@@ -192,7 +172,7 @@ describe('MySQL Strategy', () => {
       name: 'profiles-update-1',
     };
 
-    const mySQLStrategy = new MySQLStrategy(pool);
+    const mySQLStrategy = new MySQLStrategy(uri);
     const updatedConfigurations = await mySQLStrategy.update(assignment, condition);
 
     const checker = await mySQLStrategy.select({...condition, ...assignment});
@@ -202,8 +182,6 @@ describe('MySQL Strategy', () => {
   });
 
   it('should return [] of not match', async () => {
-    const pool = await MySQLPool.get();
-    
     const assignment = {
       name: 'sudoers',
       age: 18
@@ -214,14 +192,13 @@ describe('MySQL Strategy', () => {
       name: 'profiles-update-1',
     };
 
-    const mySQLStrategy = new MySQLStrategy(pool);
+    const mySQLStrategy = new MySQLStrategy(uri);
     const updatedConfigurations = await mySQLStrategy.update(assignment, condition);
 
     expect(updatedConfigurations).toHaveLength(0);
   });
 
   it('should delete configuration', async() => {
-    const pool = await MySQLPool.get();
     const configuration = {
       userId: UserID.DELETE,
       data: JSON.stringify(
@@ -232,9 +209,9 @@ describe('MySQL Strategy', () => {
       )
     };
 
-    await insertConfigurationForUser(pool, configuration);
+    await insertConfigurationForUser(configuration);
 
-    const mySQLStrategy = new MySQLStrategy(pool);
+    const mySQLStrategy = new MySQLStrategy(uri);
 
     const condition = {
       _userId: UserID.DELETE,
@@ -250,7 +227,13 @@ describe('MySQL Strategy', () => {
   });
 });
 
-async function createDefaultUsers(pool) {
+function getSQLURIFromEnviroment() {
+  return process.env.MYSQL_URI;
+}
+
+async function createDefaultUsers() {
+  const pool = await createPool();
+
   for (let username in UserID) {
     let connection = await pool.getConnection();
 
@@ -261,7 +244,15 @@ async function createDefaultUsers(pool) {
   }
 }
 
-async function deleteTable(pool, name) {
+async function createPool() {
+  const uri = process.env.MYSQL_URI;
+  const pool = await MySQLPool.connect(uri);
+  return pool;
+}
+
+async function deleteTable(name) {
+  const pool = await createPool();
+
   let connection = await pool.getConnection();
 
   const stmt = 'DROP TABLE IF EXISTS ' + name;
@@ -270,7 +261,9 @@ async function deleteTable(pool, name) {
   connection.release();
 }
 
-async function createTable(pool, name) {
+async function createTable(name) {
+  const pool = await createPool();
+
   let connection = await pool.getConnection();
 
   const path = `./scripts/test/create-table-${name}.sql`;
@@ -281,7 +274,9 @@ async function createTable(pool, name) {
   connection.release();
 }
 
-async function insertConfigurationForUser(pool, configuration) {
+async function insertConfigurationForUser(configuration) {
+  const pool = await createPool();
+
   const connection = await pool.getConnection();
 
   const stmt = 'INSERT INTO configuration (data, user_id) VALUES (?, ?)';
@@ -293,19 +288,13 @@ async function insertConfigurationForUser(pool, configuration) {
   connection.release();
 }
 
-async function deleteUserConfigurations(pool, userId) {
+async function deleteUserConfigurations(userId) {
+  const pool = await createPool();
+
   const connection = await pool.getConnection();
 
   const stmt = 'DELETE FROM configuration WHERE user_id = ?';
   await connection.query(stmt, [userId]);
 
   connection.release();
-}
-
-function setEnviromentStoreType(type) {
-  process.env.STORE_TYPE = type;
-}
-
-function setEnviromentMySQLURI(uri) {
-  process.env.MYSQL_URI = uri;
 }

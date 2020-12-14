@@ -1,42 +1,50 @@
 const mysql = require('mysql2/promise');
-const { Enviroment } = require('../../enviroment');
 
 class MySQLPool {
+  static db = null;
 
-  constructor() {
-    this.db = null;
-  }
-
-  async connect() {
-    if (!this.isConnected()) {
+  static async connect(uri) {
+    if (!MySQLPool.isConnected()) {
       const configuration = {
-        uri: Enviroment.getMySQLURI()
+        uri: uri
       };
-      this.db = await mysql.createPool(configuration);
+
+      MySQLPool.db = await mysql.createPool(configuration);
     }
 
     return this.db;
   }
 
-  async get() {
-    if (!this.isConnected()) {
-      await this.connect();
+  static async execute(query, params) {
+    if (!MySQLPool.isConnected()) {
+      throw Error('Must be connect to MYSQL before Execute Query');
     }
 
-    return this.db;
+    const connection = await MySQLPool.db.getConnection();
+    const result = await connection.query(query, params);
+    connection.release();
+    return result;
   }
 
-  async close() {
-    if (!this.isConnected()) {
+  static async get() {
+    if (!MySQLPool.isConnected()) {
+      throw Error('Must be connect to MYSQL before get Pool');
+    }
+
+    return MySQLPool.db;
+  }
+
+  static async close() {
+    if (!MySQLPool.isConnected()) {
       return;
     }
 
-    await this.db.end();
-    this.db = null;
+    await MySQLPool.db.end();
+    MySQLPool.db = null;
   }
 
-  isConnected() {
-    if (!this.db) {
+  static isConnected() {
+    if (!MySQLPool.db) {
       return false;
     }
 
@@ -44,4 +52,4 @@ class MySQLPool {
   }
 }
 
-module.exports = new MySQLPool();
+module.exports = MySQLPool;
