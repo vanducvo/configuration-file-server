@@ -1,13 +1,6 @@
 const Configuration = require('./configuration.js');
-const User = require('./user.js');
 
 describe('Configure Class', () => {
-  const user = new User(0, 'tester');
-  const info = {
-    name: 'Sudoers',
-    age: 30
-  };
-
 
   it('can create configuaration', () => {
     const configuration = new Configuration({ _userId: 0, names: 'sudoers' });

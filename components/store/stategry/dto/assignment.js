@@ -52,16 +52,8 @@ class Assignment {
     return context;
   }
 
-  toSQL(jsonName){
-    let code = `${jsonName} = JSON_REPLACE(${jsonName}`;
-    let params = [];
-    for(let propertyName in this._properties){
-      code += `, "$.${propertyName}", ?`;
-      params.push(this._properties[propertyName]);
-    }
-
-    code += ')';
-    return {code, params};
+  getProperties(){
+    return Assignment.deepClone(this._properties);
   }
 
   getClassName() {

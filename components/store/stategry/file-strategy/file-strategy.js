@@ -3,13 +3,13 @@ const path = require('path');
 const v8 = require('v8');
 const util = require('util');
 
-const StrategyStore = require('./strategy-store.js');
+const StrategyStore = require('../strategy-store.js');
 
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
-const Condition = require('../../dto/condition.js');
-const Configuration = require('../../dto/configuration.js');
-const Assignment = require('../../dto/assignment.js');
+const Condition = require('../dto/condition.js');
+const Configuration = require('../dto/configuration.js');
+const Assignment = require('../dto/assignment.js');
 
 class FileStrategy extends StrategyStore {
 

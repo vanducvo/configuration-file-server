@@ -1,4 +1,4 @@
-const { StoreTypes } = require('../enviroment/index.js');
+const { StoreTypes } = require('../../enviroment/index.js');
 const MySQLPool = require('./mysql-pool.js');
 
 describe('MySQL connection', () => {

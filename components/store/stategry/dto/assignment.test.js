@@ -85,20 +85,27 @@ describe('Change Class', () => {
     }).toThrowError(message);
   });
 
-  it('can tranforms assignments to SQL code', () => {
+  it('can get properties', () => {
     const properties = {
-      name: 'sudoers',
-      age: 10
+      getMarried: false
     };
 
     const assignment = new Assignment(
       properties
     );
 
-    const sql = assignment.toSQL('data');
-
-    expect(sql.code).toEqual('data = JSON_REPLACE(data, "$.name", ?, "$.age", ?)');
-    expect(sql.params).toEqual(['sudoers', 10]);
+    expect(assignment.getProperties()).toEqual(properties);
   });
 
+  it('can get properties', () => {
+    const properties = {
+      getMarried: false
+    };
+
+    const assignment = new Assignment(
+      properties
+    );
+
+    expect(assignment.getProperties()).toEqual(properties);
+  });
 });

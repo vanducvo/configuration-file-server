@@ -59,44 +59,18 @@ describe('Condition', () => {
     }
   });
 
-  it('can change User Id to SQL condition code', () => {
+  it('can get properties', () => {
     const properties = {
-      _userId: 0
-    }
+      _userId: 10,
+      getMarried: false,
+    };
 
-    const condition = new Condition(properties);
-    const code = 'user_id = ?';
-    const sql = condition.toSQL('data');
-    expect(sql.code).toEqual(code);
-    expect(sql.params).toEqual([0]);
-  });
+    const condition = new Condition(
+      properties
+    );
 
-  it('can change condition to SQL condition code', () => {
-    const properties = {
-      _userId: 0,
-      name: 'brew',
-      age: 30
-    }
-
-    const condition = new Condition(properties);
-    const code = 'user_id = ? AND data->"$.name" = ? AND data->"$.age" = ?';
-    const sql = condition.toSQL('data');
-    expect(sql.code).toEqual(code);
-    expect(sql.params).toEqual([0, 'brew', 30]);
-  });
-
-  it('can change condition to SQL condition code special _id', () => {
-    const properties = {
-      _userId: 0,
-      _id: 10,
-      name: 'brew',
-      age: 30
-    }
-
-    const condition = new Condition(properties);
-    const code = 'user_id = ? AND id = ? AND data->"$.name" = ? AND data->"$.age" = ?';
-    const sql = condition.toSQL('data');
-    expect(sql.code).toEqual(code);
-    expect(sql.params).toEqual([0, 10, 'brew', 30]);
+    const expectProperties = { getMarried: false };
+    
+    expect(condition.getProperties()).toEqual(expectProperties);
   });
 });

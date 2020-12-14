@@ -1,5 +1,8 @@
+const v8 = require('v8');
+
 class Condition {
   constructor(properties) {
+    properties = Condition.deepClone(properties);
 
     if (!Condition.isValidProperties(properties)) {
       const message = this.constructor.name +
@@ -11,6 +14,10 @@ class Condition {
 
     this._properties = _properties;
     this._userId = _userId;
+  }
+
+  static deepClone(json) {
+    return v8.deserialize(v8.serialize(json));
   }
 
   getUserId(){
@@ -41,22 +48,8 @@ class Condition {
     return true;
   }
 
-  toSQL(jsonName){
-    let code = 'user_id = ?';
-    let params = [this._userId];
-
-    for(const propertyname in this._properties){
-      if(propertyname === '_id'){
-        code += ` AND id = ?`;
-      } else {
-        code += ` AND ${jsonName}->"$.${propertyname}" = ?`;
-      }
-
-      
-      params.push(this._properties[propertyname]);
-    }
-
-    return {code, params};
+  getProperties(){
+    return Condition.deepClone(this._properties);
   }
 }
 
