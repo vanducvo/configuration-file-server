@@ -27,8 +27,12 @@ describe('MySQL Strategy', () => {
     ]);
   });
 
-  afterAll(() => {
-    MySQLPool.close();
+  beforeEach(async() => {
+    await MySQLPool.close();
+  })
+
+  afterAll(async () => {
+    await MySQLPool.close();
   });
 
 
@@ -83,8 +87,6 @@ describe('MySQL Strategy', () => {
 
 
   it('can select all configuration of user', async () => {
-    const pool = await MySQLPool.get();
-
     await deleteUserConfigurations(UserID.SELECT);
     const configuration = {
       userId: UserID.SELECT,
