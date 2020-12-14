@@ -1,6 +1,6 @@
 const MySQLQueryFactory = require('./mysql-query-factory');
 const StrategyStore = require('../strategy-store.js');
-const MySQLPool = require('./mysql-pool.js');
+const MySQLPool = require('../../../database/mysql-pool.js');
 
 class MySQLStrategy extends StrategyStore {
   constructor(uri) {
