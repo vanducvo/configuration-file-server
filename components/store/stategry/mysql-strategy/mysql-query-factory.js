@@ -1,6 +1,6 @@
-const Assignment = require('../../../dto/assignment');
-const Condition = require('../../../dto/condition');
-const Configuration = require('../../../dto/configuration');
+const Assignment = require('../dto/assignment');
+const Condition = require('../dto/condition');
+const Configuration = require('../dto/configuration');
 
 class MySQLQueryFactory {
   constructor(tableName, { configurationColName, userIdColName }) {
