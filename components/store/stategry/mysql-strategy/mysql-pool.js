@@ -1,5 +1,5 @@
 const mysql = require('mysql2/promise');
-const { Enviroment } = require('../enviroment');
+const { Enviroment } = require('../../enviroment');
 
 class MySQLPool {
 

@@ -1,4 +1,4 @@
-const { StoreTypes } = require('../enviroment/index.js');
+const { StoreTypes } = require('../../enviroment/index.js');
 const MySQLPool = require('./mysql-pool.js');
 const MySQLStrategy = require('./mysql-strategy.js');
 const fs = require('fs');
