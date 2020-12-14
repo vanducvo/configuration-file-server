@@ -1,10 +1,12 @@
 const MySQLQueryFactory = require('./mysql-query-factory');
 const StrategyStore = require('../strategy-store.js');
+const MySQLPool = require('./mysql-pool.js');
 
 class MySQLStrategy extends StrategyStore {
-  constructor(pool) {
+  constructor(uri) {
     super();
-    this._pool = pool;
+    MySQLPool.connect(uri);
+    this._pool =  MySQLPool;
     this._queryFactory = new MySQLQueryFactory(
       'configuration',
       {
@@ -14,13 +16,6 @@ class MySQLStrategy extends StrategyStore {
     );
   }
 
-  async execute(query, params) {
-    const connection = await this._pool.getConnection();
-    const result = await connection.query(query, params);
-    connection.release();
-    return result;
-  }
-
   async userConfigurationCount(userId) {
     const {
       query, 
@@ -28,7 +23,7 @@ class MySQLStrategy extends StrategyStore {
       getter
     } = this._queryFactory.countConfiguration(userId);
 
-    const response = await this.execute(query, params);
+    const response = await this._pool.execute(query, params);
 
     return getter(response);
   }
@@ -40,7 +35,7 @@ class MySQLStrategy extends StrategyStore {
       getter
     } = this._queryFactory.selectConfiguration(condition);
 
-    const response = await this.execute(query, params);
+    const response = await this._pool.execute(query, params);
 
     return getter(response);
   }
@@ -53,7 +48,7 @@ class MySQLStrategy extends StrategyStore {
       getter
     } = this._queryFactory.insertConfiguration(configuration);
 
-    const response = await this.execute(query, params);
+    const response = await this._pool.execute(query, params);
 
     return getter(response);
   }
@@ -65,7 +60,7 @@ class MySQLStrategy extends StrategyStore {
       params
     } = this._queryFactory.updateConfiguration(assignment, condition);
 
-    await this.execute(query, params);
+    await this._pool.execute(query, params);
 
     const updatedCondition = { ...condition, ...assignment };
     return this.select(updatedCondition);
@@ -79,7 +74,7 @@ class MySQLStrategy extends StrategyStore {
     } = this._queryFactory.deleteConfiguration(condition);
 
     const results = this.select(condition);
-    await this.execute(query, params);
+    await this._pool.execute(query, params);
 
     return results;
   }

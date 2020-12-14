@@ -1,22 +1,9 @@
-const { StoreTypes } = require('../../enviroment/index.js');
+const { StoreTypes, Enviroment } = require('../../enviroment/index.js');
 const MySQLPool = require('./mysql-pool.js');
 
 describe('MySQL connection', () => {
-
-  const OLD_ENV = process.env;
-
-  beforeEach(() => {
-    jest.resetModules();
-    process.env = { ...OLD_ENV };
-    setEnviromentStoreType(StoreTypes.MYSQL);
-    const uri = 'mysql://configuration:88888888@localhost:3306/configuration_test';
-    setEnviromentMySQLURI(uri);
-  });
-
-  afterEach(() => {
-    process.env = OLD_ENV;
-  });
-
+  const uri = null;
+  
   afterAll(async () => {
     await MySQLPool.close();
   });
@@ -31,8 +18,8 @@ describe('MySQL connection', () => {
   });
 
   it('can connect safe and should true when got connect', async () => {
-    await MySQLPool.connect();
-    await MySQLPool.connect();
+    await MySQLPool.connect(uri);
+    await MySQLPool.connect(uri);
 
     const isConnected = MySQLPool.isConnected();
 
@@ -47,25 +34,22 @@ describe('MySQL connection', () => {
   });
 
   it('can get connect when connected', async () => {
-    await MySQLPool.connect();
+    await MySQLPool.connect(uri);
 
     const pool = await MySQLPool.get();
 
     expect(pool).not.toBeNull();
   });
 
-  it('can get when disconnected', async () => {
+  it('should throw error get when disconnected', async () => {
     await MySQLPool.close();
-    const pool = await MySQLPool.get();
 
-    expect(pool).not.toBeNull();
+    await expect(MySQLPool.get()).rejects.toThrowError();
+  });
+
+  it('should throw error execute when disconnected', async () => {
+    await MySQLPool.close();
+
+    await expect(MySQLPool.execute('SELECT 1', [])).rejects.toThrowError();
   });
 });
-
-function setEnviromentStoreType(type) {
-  process.env.STORE_TYPE = type;
-}
-
-function setEnviromentMySQLURI(uri) {
-  process.env.MYSQL_URI = uri;
-}
