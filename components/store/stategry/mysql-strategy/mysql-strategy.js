@@ -5,7 +5,7 @@ const MySQLPool = require('./mysql-pool.js');
 class MySQLStrategy extends StrategyStore {
   constructor(uri) {
     super();
-    MySQLPool.connect(uri);
+    this._connect = MySQLPool.connect(uri);
     this._pool =  MySQLPool;
     this._queryFactory = new MySQLQueryFactory(
       'configuration',
@@ -23,6 +23,7 @@ class MySQLStrategy extends StrategyStore {
       getter
     } = this._queryFactory.countConfiguration(userId);
 
+    await this._connect;
     const response = await this._pool.execute(query, params);
 
     return getter(response);
@@ -35,6 +36,7 @@ class MySQLStrategy extends StrategyStore {
       getter
     } = this._queryFactory.selectConfiguration(condition);
 
+    await this._connect;
     const response = await this._pool.execute(query, params);
 
     return getter(response);
@@ -48,6 +50,7 @@ class MySQLStrategy extends StrategyStore {
       getter
     } = this._queryFactory.insertConfiguration(configuration);
 
+    await this._connect;
     const response = await this._pool.execute(query, params);
 
     return getter(response);
@@ -60,10 +63,11 @@ class MySQLStrategy extends StrategyStore {
       params
     } = this._queryFactory.updateConfiguration(assignment, condition);
 
+    await this._connect;
     await this._pool.execute(query, params);
 
     const updatedCondition = { ...condition, ...assignment };
-    return this.select(updatedCondition);
+    return await this.select(updatedCondition);
   }
 
   async delete(condition) {
@@ -73,7 +77,8 @@ class MySQLStrategy extends StrategyStore {
       params
     } = this._queryFactory.deleteConfiguration(condition);
 
-    const results = this.select(condition);
+    await this._connect;
+    const results = await this.select(condition);
     await this._pool.execute(query, params);
 
     return results;

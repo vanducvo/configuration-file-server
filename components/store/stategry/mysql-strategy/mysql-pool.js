@@ -10,6 +10,10 @@ class MySQLPool {
       };
 
       MySQLPool.db = await mysql.createPool(configuration);
+      
+      process.on('exit', () => {
+        MySQLPool.close();
+      });
     }
 
     return this.db;

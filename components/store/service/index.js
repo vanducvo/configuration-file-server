@@ -19,20 +19,20 @@ class StoreService {
     }
   }
 
-  select(condition){
-    return this.strategy.select(condition);
+  async select(condition){
+    return await this.strategy.select(condition);
   }
 
-  insert(configuration){
-    return this.strategy.insert(configuration);
+  async insert(configuration){
+    return await this.strategy.insert(configuration);
   }
 
-  update(assignment, condition){
-    return this.strategy.update(assignment, condition);
+  async update(assignment, condition){
+    return await this.strategy.update(assignment, condition);
   }
 
-  delete(condition){
-    return this.strategy.delete(condition);
+  async delete(condition){
+    return await this.strategy.delete(condition);
   }
   
 }
