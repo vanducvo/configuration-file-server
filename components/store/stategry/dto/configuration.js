@@ -32,7 +32,7 @@ class Configuration {
     return v8.deserialize(v8.serialize(json));
   }
 
-  getConfig() {
+  getProperties() {
     return { ...this._properties };
   }
 

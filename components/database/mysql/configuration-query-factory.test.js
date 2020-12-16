@@ -1,4 +1,4 @@
-const MySQLQueryFactory = require('./mysql-query-factory.js');
+const MySQLQueryFactory = require('./configuration-query-factory.js');
 
 describe('MYSQL Query Factory', () => {
 
@@ -19,11 +19,13 @@ describe('MYSQL Query Factory', () => {
       );
 
       const properties = {
-        _userId: 0
+        
       }
 
+      const userId = 0;
+
       const code = 'user_id = ?';
-      const sql = mySQLQueryFactory._conditionToSQL(properties);
+      const sql = mySQLQueryFactory._conditionToSQL(properties, userId);
       expect(sql.code).toEqual(code);
       expect(sql.params).toEqual([0]);
     });
@@ -38,14 +40,14 @@ describe('MYSQL Query Factory', () => {
       );
 
       const properties = {
-        _userId: 0,
         name: 'brew',
         age: 30
       }
 
+      const userId = 0;
 
       const code = 'user_id = ? AND data->"$.name" = ? AND data->"$.age" = ?';
-      const sql = mySQLQueryFactory._conditionToSQL(properties);
+      const sql = mySQLQueryFactory._conditionToSQL(properties, userId);
       expect(sql.code).toEqual(code);
       expect(sql.params).toEqual([0, 'brew', 30]);
     });
@@ -61,14 +63,15 @@ describe('MYSQL Query Factory', () => {
       );
 
       const properties = {
-        _userId: 0,
         _id: 10,
         name: 'brew',
         age: 30
       }
 
+      const userId = 0;
+
       const code = 'user_id = ? AND id = ? AND data->"$.name" = ? AND data->"$.age" = ?';
-      const sql = mySQLQueryFactory._conditionToSQL(properties);
+      const sql = mySQLQueryFactory._conditionToSQL(properties, userId);
       expect(sql.code).toEqual(code);
       expect(sql.params).toEqual([0, 10, 'brew', 30]);
     });
@@ -84,18 +87,19 @@ describe('MYSQL Query Factory', () => {
       }
     );
 
-    const condition = {
-      _userId: 0,
+    const properties = {
       _id: 10,
       id: 20
     };
+
+    const userId = 0;
 
     const expectQuery = "SELECT JSON_INSERT(data, '$._id', id) as data "
       + "FROM configuration WHERE user_id = ? AND id = ? AND data->\"$.id\" = ?";
 
     const expectParams = [0, 10, 20];
 
-    const { query, params } = mySQLSQueryFactory.selectConfiguration(condition);
+    const { query, params } = mySQLSQueryFactory.selectConfiguration(properties, userId);
     expect(query).toEqual(expectQuery);
     expect(params).toEqual(expectParams);
   });
@@ -110,13 +114,14 @@ describe('MYSQL Query Factory', () => {
       }
     );
 
-    const configuration = {
-      _userId: 0,
+    const properties = {
       user: {
         firstname: 'Duc',
         lastname: 'Vo'
       }
     };
+
+    const userId = 0;
 
     const expectQuery = `INSERT INTO configuration(data, user_id) VALUES (?, ?)`;
 
@@ -132,7 +137,7 @@ describe('MYSQL Query Factory', () => {
       0
     ];
 
-    const { query, params} = mySQLSQueryFactory.insertConfiguration(configuration);
+    const { query, params} = mySQLSQueryFactory.insertConfiguration(properties, userId);
     expect(query).toEqual(expectQuery);
     expect(params).toEqual(expectParams);
   });
@@ -146,18 +151,19 @@ describe('MYSQL Query Factory', () => {
       }
     );
 
-    const condition = {
-      _userId: 0,
+    const properties = {
       _id: 10,
       id: 20
     };
+
+    const userId = 0;
 
     const expectQuery = "DELETE FROM configuration WHERE " 
     + "user_id = ? AND id = ? AND data->\"$.id\" = ?" ;
 
     const expectParams = [0, 10, 20];
 
-    const { query, params } = mySQLSQueryFactory.deleteConfiguration(condition);
+    const { query, params } = mySQLSQueryFactory.deleteConfiguration(properties, userId);
     expect(query).toEqual(expectQuery);
     expect(params).toEqual(expectParams);
   });
@@ -171,12 +177,13 @@ describe('MYSQL Query Factory', () => {
       }
     );
 
-    const condition = {
-      _userId: 0,
+    const conditionProperties = {
       _id: 10,
     };
 
-    const assignment = {
+    const userId = 0;
+
+    const assignmentProperties = {
       name: 'Brew',
       age: 30,
     };
@@ -186,7 +193,7 @@ describe('MYSQL Query Factory', () => {
 
     const expectParams = ['Brew', 30, 0, 10];
 
-    const { query, params } = mySQLSQueryFactory.updateConfiguration(assignment, condition);
+    const { query, params } = mySQLSQueryFactory.updateConfiguration(assignmentProperties, conditionProperties, userId);
     expect(query).toEqual(expectQuery);
     expect(params).toEqual(expectParams);
   });
