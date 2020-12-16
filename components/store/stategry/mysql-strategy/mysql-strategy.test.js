@@ -1,4 +1,4 @@
-const MySQLPool = require('../../../database/mysql-pool.js');
+const MySQLPool = require('../../../database/mysql/mysql-pool.js');
 const MySQLStrategy = require('./mysql-strategy.js');
 const fs = require('fs');
 
