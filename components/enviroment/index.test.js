@@ -77,12 +77,6 @@ describe('Enviroment Components', () => {
 
       expect(Enviroment.getMySQLURI()).toEqual(uri)
     });
-
-    it('should throw error when get MYSQL URI when type is not MYSQL', () => {
-      setEnviromentStoreType(StoreTypes.MONGODB);
-
-      expect(() => Enviroment.getMySQLURI()).toThrowError()
-    });
 });
 
 function setEnviromentMySQLURI(uri) {

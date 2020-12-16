@@ -1,4 +1,4 @@
-class MySQLQueryFactory {
+class ConfigurationQueryFactory {
   constructor(tableName, { configurationColName, userIdColName }) {
     this._tableName = tableName;
     this._configurationColName = configurationColName;
@@ -35,7 +35,7 @@ class MySQLQueryFactory {
       query,
       params: sql.params,
       getter: (response) => {
-        return MySQLQueryFactory.getPropertyFromReponse(
+        return ConfigurationQueryFactory.getPropertyFromReponse(
           response,
           this._configurationColName
         );
@@ -56,7 +56,7 @@ class MySQLQueryFactory {
       query,
       params,
       getter: (response) => {
-        return MySQLQueryFactory.getInsertedId(response)
+        return ConfigurationQueryFactory.getInsertedId(response)
       }
     }
   }
@@ -99,7 +99,7 @@ class MySQLQueryFactory {
       query,
       params,
       getter: (response) => {
-        return MySQLQueryFactory.getPropertyFromSingleResponse(response, 'count');
+        return ConfigurationQueryFactory.getPropertyFromSingleResponse(response, 'count');
       }
     };
   }
@@ -135,4 +135,4 @@ class MySQLQueryFactory {
   }
 }
 
-module.exports = MySQLQueryFactory;
+module.exports = ConfigurationQueryFactory;
