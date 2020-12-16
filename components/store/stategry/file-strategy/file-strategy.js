@@ -168,7 +168,7 @@ class FileStrategy extends StrategyStore {
       throw new Error('Exceed Limit Configuarion Each File');
     }
 
-    store = FileStrategy.appendConfiguration(store, configuration.getConfig());
+    store = FileStrategy.appendConfiguration(store, configuration.getProperties());
     const id = store.lastIndex - 1;
 
     await this.saveStore(userId, store);

@@ -1,5 +1,5 @@
 const { StoreTypes, Enviroment } = require('../../store/enviroment/index.js');
-const MySQLPool = require('./mysql-pool.js');
+const MySQLPool = require('./pool.js');
 
 describe('MySQL connection', () => {
   const uri = null;

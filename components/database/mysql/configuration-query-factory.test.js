@@ -1,4 +1,4 @@
-const MySQLQueryFactory = require('./mysql-query-factory.js');
+const MySQLQueryFactory = require('./configuration-query-factory.js');
 
 describe('MYSQL Query Factory', () => {
 

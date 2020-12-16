@@ -1,6 +1,6 @@
-const MySQLQueryFactory = require('../../../database/mysql/mysql-query-factory.js');
+const MySQLQueryFactory = require('../../../database/mysql/configuration-query-factory.js');
 const StrategyStore = require('../strategy-store.js');
-const MySQLPool = require('../../../database/mysql/mysql-pool.js');
+const MySQLPool = require('../../../database/mysql/pool.js');
 const Condition = require('../dto/condition.js');
 const Configuration = require('../dto/configuration.js');
 const Assignment = require('../dto/assignment.js');
@@ -56,7 +56,7 @@ class MySQLStrategy extends StrategyStore {
       params,
       getter
     } = this._queryFactory.insertConfiguration(
-      configuration.getConfig(),
+      configuration.getProperties(),
       configuration.getUserId()
     );
 

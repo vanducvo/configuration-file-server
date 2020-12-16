@@ -22,7 +22,7 @@ describe('Configure Class', () => {
     const configuration = new Configuration(properties);
 
     const config = { names: 'sudoers' };
-    expect(configuration.getConfig()).toEqual(config);
+    expect(configuration.getProperties()).toEqual(config);
   });
 
 
@@ -49,6 +49,6 @@ describe('Configure Class', () => {
     const configuration = new Configuration(properties);
     properties.age.complexInfo = 31;
 
-    expect(configuration.getConfig()).not.toEqual(properties);
+    expect(configuration.getProperties()).not.toEqual(properties);
   });
 });
