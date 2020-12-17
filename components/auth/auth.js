@@ -19,7 +19,7 @@ exports.login = new LocalStrategy(
         return done(new Error('Invalid!'));
       }
 
-      const user = { id: userId };
+      const user = { id: userId, username };
       const secretKey = Enviroment.getJwtSecret();
       return done(null, {
         token: jwt.sign(user,secretKey,{expiresIn: '1d'})
@@ -37,7 +37,8 @@ exports.authorization = new JWTStrategy(
   },
   async function (payload, done) {
     try {
-      done(null, {id: payload.id});
+      const user = { id: payload.id, username: payload.username };
+      done(null, user);
     } catch (e) {
       done(e);
     }
@@ -54,10 +55,10 @@ exports.register = new LocalStrategy(
     const userRespos = new UserRepos();
     try {
       const userId = await userRespos.insert({ username, password });
-      return done(null, { id: userId });
+      const user = { id: userId, username };
+      return done(null, user);
     } catch (e) {
       return done(e);
     }
   }
 );
-
