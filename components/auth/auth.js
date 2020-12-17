@@ -2,6 +2,8 @@ const LocalStrategy = require('passport-local').Strategy;
 const UserRepos = require('./user-repos.js');
 const JWTStrategy = require('passport-jwt').Strategy;
 const ExtractJWT = require('passport-jwt').ExtractJwt;
+const { Enviroment } = require('../enviroment/index.js');
+const jwt = require('jsonwebtoken');
 
 exports.login = new LocalStrategy(
   {
@@ -14,25 +16,29 @@ exports.login = new LocalStrategy(
     try {
       const userId = await userRespos.verify({ username, password });
       if (!userId) {
-        return done('Invalid!')
+        return done(new Error('Invalid!'));
       }
 
-      return done(null, { id: userId });
+      const user = { id: userId };
+      const secretKey = Enviroment.getJwtSecret();
+      return done(null, {
+        token: jwt.sign(user,secretKey,{expiresIn: '1d'})
+      });
     } catch (e) {
-      return done('Invalid!')
+      return done(e);
     }
   }
 );
 
 exports.authorization = new JWTStrategy(
   {
-    secretOrKey: 'NEED_ENVIROMENT',
+    secretOrKey: Enviroment.getJwtSecret(),
     jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken()
   },
-  async function(payload, done){
-    try{
-      done(null, payload.id);
-    }catch(e){
+  async function (payload, done) {
+    try {
+      done(null, {id: payload.id});
+    } catch (e) {
       done(e);
     }
   }
@@ -45,13 +51,12 @@ exports.register = new LocalStrategy(
     session: false
   },
   async function (username, password, done) {
-    console.log('Here!');
     const userRespos = new UserRepos();
     try {
       const userId = await userRespos.insert({ username, password });
       return done(null, { id: userId });
     } catch (e) {
-      return done('Account Existed!')
+      return done(e);
     }
   }
 );

@@ -1,9 +1,9 @@
+require('dotenv').config();
+
 const express = require('express');
 const app = express();
 const auth = require('./components/auth');
-const {json} = require('body-parser')
-
-require('dotenv').config();
+const {json} = require('body-parser');
 
 app.use(json());
 

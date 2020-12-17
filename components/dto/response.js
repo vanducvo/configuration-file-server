@@ -2,8 +2,7 @@ const v8 = require('v8');
 const { measureMemory } = require('vm');
 
 class Response {
-  constructor(code, message, data){
-    this._code = code;
+  constructor(message, data){
     this._message = message;
     this._data = Response.deepClone(data);
   }
@@ -12,20 +11,12 @@ class Response {
     return v8.deserialize(v8.serialize(data))
   }
 
-  getCode(){
-    return this._code;
-  }
-
   getMessage(){
     return this._message;
   }
 
   getData(){
     return Response.deepClone(this._data);
-  }
-
-  setCode(code){
-    this._code = code;
   }
 
   setMessage(message){

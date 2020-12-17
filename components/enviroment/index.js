@@ -57,6 +57,10 @@ class Enviroment {
     throw new Error(message);
   }
 
+  static getJwtSecret(){
+    return process.env.JWT_SECRET;
+  }
+
   static getMySQLURI() {
     return process.env.MYSQL_URI;
   }

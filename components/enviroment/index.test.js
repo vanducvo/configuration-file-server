@@ -77,6 +77,12 @@ describe('Enviroment Components', () => {
 
       expect(Enviroment.getMySQLURI()).toEqual(uri)
     });
+
+    it('can get JWT secret', () => {
+      process.env.JWT_SECRET  = 'ABC';
+
+      expect(Enviroment.getJwtSecret()).toEqual('ABC');
+    });
 });
 
 function setEnviromentMySQLURI(uri) {
