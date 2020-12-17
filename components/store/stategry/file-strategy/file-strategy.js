@@ -124,9 +124,13 @@ class FileStrategy extends StrategyStore {
   async getStore(userId) {
     const filename = FileStrategy.getFileName(userId);
     const filePath = this.getFilePath(filename);
-    const buffer = await readFile(filePath);
 
-    const configurations = FileStrategy.decode(buffer);
+    let configurations = FileStrategy.makeStoreDefault();
+    if(fs.existsSync(filePath)){
+      const buffer = await readFile(filePath);
+
+      configurations = FileStrategy.decode(buffer);
+    }
 
     return configurations;
   }

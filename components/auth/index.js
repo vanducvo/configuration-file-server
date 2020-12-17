@@ -12,7 +12,7 @@ router.post(
     passport.authenticate(
       'register',
       { session: false },
-      authHandle(res)
+      authHandle(req, res)
     )(req, res, next);
   }
 );
@@ -23,38 +23,52 @@ router.post(
     passport.authenticate(
       'login',
       { session: false },
-      authHandle(res)
+      authHandle(req, res)
     )(req, res, next);
   }
 
 );
 
 
-router.post(
-  '/authorization',
+router.use(
+  '/',
   function (req, res, next) {
     passport.authenticate(
       'authorization',
       { session: false },
-      authHandle(res)
+      authHandle(req, res, next)
     )(req, res, next);
   }
 );
 
-function authHandle(res) {
+function authHandle(req, res, next) {
   return function (error, user, info) {
-    if (error) {
+    if (isInvalid(error, user)) {
       const BAD_REQUEST = 400;
       res.status(BAD_REQUEST);
       const payload = new Response('Unsuccessfully!');
       return res.json(payload);
     }
 
-    const SUCESS = 200;
-    res.status(SUCESS);
-    const payload = new Response('Successfuly!', user);
-    return res.json(payload);
+    if (isNotMiddleWare(next)) {
+      const SUCCESS = 200;
+      res.status(SUCCESS);
+      const payload = new Response('Successfuly!', user);
+      return res.json(payload);
+    }
+
+    req.user = user;
+    next();
   }
 };
 
+function isNotMiddleWare(next) {
+  return !next;
+}
+
+function isInvalid(error, user) {
+  return error || !user;
+}
+
 module.exports = router;
+
