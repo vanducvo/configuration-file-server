@@ -57,16 +57,12 @@ class Enviroment {
     throw new Error(message);
   }
 
+  static getJwtSecret(){
+    return process.env.JWT_SECRET;
+  }
+
   static getMySQLURI() {
-
-    if (process.env.STORE_TYPE === StoreTypes.MYSQL) {
-      return process.env.MYSQL_URI;
-    }
-
-    const message = `Enviroment is using Storage Type: 
-                    "${process.env.STORE_TYPE}", not "MYSQL"`;
-
-    throw new Error(message);
+    return process.env.MYSQL_URI;
   }
 }
 

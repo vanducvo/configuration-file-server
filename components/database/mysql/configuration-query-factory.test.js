@@ -3,7 +3,13 @@ const MySQLQueryFactory = require('./configuration-query-factory.js');
 describe('MYSQL Query Factory', () => {
 
   it('should be create instance with table name', () => {
-    const mySQLSQueryFactory = new MySQLQueryFactory('configuration', 'data');
+    const mySQLSQueryFactory = new MySQLQueryFactory(
+      'configuration',
+      {
+        jsonColName: 'data',
+        userIdColName: 'user_id'
+      }
+    );
 
     expect(mySQLSQueryFactory).toBeInstanceOf(MySQLQueryFactory);
   });
@@ -19,7 +25,7 @@ describe('MYSQL Query Factory', () => {
       );
 
       const properties = {
-        
+
       }
 
       const userId = 0;
@@ -137,7 +143,7 @@ describe('MYSQL Query Factory', () => {
       0
     ];
 
-    const { query, params} = mySQLSQueryFactory.insertConfiguration(properties, userId);
+    const { query, params } = mySQLSQueryFactory.insertConfiguration(properties, userId);
     expect(query).toEqual(expectQuery);
     expect(params).toEqual(expectParams);
   });
@@ -158,8 +164,8 @@ describe('MYSQL Query Factory', () => {
 
     const userId = 0;
 
-    const expectQuery = "DELETE FROM configuration WHERE " 
-    + "user_id = ? AND id = ? AND data->\"$.id\" = ?" ;
+    const expectQuery = "DELETE FROM configuration WHERE "
+      + "user_id = ? AND id = ? AND data->\"$.id\" = ?";
 
     const expectParams = [0, 10, 20];
 
@@ -210,8 +216,8 @@ describe('MYSQL Query Factory', () => {
     const userId = 0;
 
     const expectQuery = 'SELECT COUNT(*) as count FROM configuration WHERE user_id = ?';
-    const expectParams = [userId];   
-    const {query, params} = mySQLSQueryFactory.countConfiguration(userId);
+    const expectParams = [userId];
+    const { query, params } = mySQLSQueryFactory.countConfiguration(userId);
 
     expect(query).toEqual(expectQuery);
     expect(params).toEqual(expectParams);

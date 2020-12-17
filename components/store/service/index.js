@@ -1,4 +1,4 @@
-const { StoreTypes, Enviroment } = require('../enviroment');
+const { StoreTypes, Enviroment } = require('../../enviroment');
 const { FileStrategy, MySQLStrategy } = require('../stategry');
 
 class StoreService {

@@ -1,4 +1,4 @@
-const MySQLQueryFactory = require('../../../database/mysql/configuration-query-factory.js');
+const ConfigurationQueryFactory = require('../../../database/mysql/configuration-query-factory.js');
 const StrategyStore = require('../strategy-store.js');
 const MySQLPool = require('../../../database/mysql/pool.js');
 const Condition = require('../dto/condition.js');
@@ -10,7 +10,7 @@ class MySQLStrategy extends StrategyStore {
     super();
     this._connect = MySQLPool.connect(uri);
     this._pool = MySQLPool;
-    this._queryFactory = new MySQLQueryFactory(
+    this._queryFactory = new ConfigurationQueryFactory(
       'configuration',
       {
         configurationColName: 'data',
