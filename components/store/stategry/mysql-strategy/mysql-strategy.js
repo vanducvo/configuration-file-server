@@ -79,12 +79,7 @@ class MySQLStrategy extends StrategyStore {
       condition.getUserId()
     );
 
-
     await this._connect;
-
-    // for(const index in queries){
-    //   await this._pool.execute(queries[index], listOfParams[index]);
-    // }
 
     await this._pool.executeMultiquery(queries, listOfParams);
     

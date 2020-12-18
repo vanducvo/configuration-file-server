@@ -34,17 +34,7 @@ class Assignment {
       throw new Error(message)
     }
 
-    const context = Assignment.deepClone(_context);
-
-    for (let propertyName in this._properties) {
-      if (this._properties[propertyName] === undefined) {
-        delete context[propertyName];
-      } else {
-        context[propertyName] = this._properties[propertyName];
-      }
-    }
-
-    return context;
+    return Object.assign(_context, this._properties);
   }
 
   getProperties() {

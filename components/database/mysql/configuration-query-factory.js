@@ -78,21 +78,24 @@ class ConfigurationQueryFactory {
     const sqlAssignmentUpdate = this._assignmentToSQLUpdate(assignmentProperties);
     const sqlAssignmentRemove = this._assignmentToSQLRemove(assignmentProperties);
 
+    let queries = [];
+    let listOfParams = [];
 
+    if(sqlAssignmentUpdate.params.length > 0){
+      const queryUpdate = `UPDATE ${this._tableName} SET `
+        + sqlAssignmentUpdate.code
+        + ' WHERE ' + sqlCondition.code;
+      const paramsUpdate = [...sqlAssignmentUpdate.params, ...sqlCondition.params];
+      
+      queries.push(queryUpdate);
+      listOfParams.push(paramsUpdate);
+    }
 
-    const queryUpdate = `UPDATE ${this._tableName} SET `
-      + sqlAssignmentUpdate.code
-      + ' WHERE ' + sqlCondition.code;
-    const paramsRemove = [...sqlAssignmentUpdate.params, ...sqlCondition.params];
-
-    let queries = [queryUpdate];
-    let listOfParams = [paramsRemove];
-
-    if(sqlAssignmentRemove){
+    if(sqlAssignmentRemove.hasRemove){
       const queryRemove = `UPDATE ${this._tableName} SET `
       + sqlAssignmentRemove.code
       + ' WHERE ' + sqlCondition.code;
-      const paramsRemove = [...sqlAssignmentRemove.params, ...sqlCondition.params];
+      const paramsRemove = [...sqlCondition.params];
       
       queries.push(queryRemove);
       listOfParams.push(paramsRemove);
@@ -138,8 +141,17 @@ class ConfigurationQueryFactory {
   }
 
   _assignmentToSQLUpdate(properties) {
-    let code = `${this._configurationColName} = JSON_MERGE_PATCH(${this._configurationColName}, ?)`;
-    let params = [JSON.stringify(properties)];
+    let code = `${this._configurationColName} = JSON_SET(${this._configurationColName}`;
+    let params = [];
+
+    for (const name in properties) {
+      if (properties[name] !== undefined) {
+        code += `, "$.${name}", CAST (? AS JSON)`;
+        params.push(JSON.stringify(properties[name]));
+      }
+    }
+
+    code += ')';
     return { code, params };
   }
 
@@ -148,19 +160,14 @@ class ConfigurationQueryFactory {
 
     let hasRemove = false;
     for (const name in properties) {
-      if (properties[name] == undefined) {
+      if (properties[name] === undefined) {
         hasRemove = true;
         code += `, "$.${name}"`;
       }
     }
     code += ')';
 
-    let params = [];
-
-    if (hasRemove) {
-      return { code, params };
-    }
-    return null;
+    return { code, hasRemove };
   }
 }
 

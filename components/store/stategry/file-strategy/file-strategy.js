@@ -161,12 +161,7 @@ class FileStrategy extends StrategyStore {
   async insert(_configuration) {
     const configuration = new Configuration(_configuration);
     const userId = configuration.getUserId();
-    let store = null;
-    if (this.wasExistedStore(userId)) {
-      store = await this.getStore(userId);
-    } else {
-      store = FileStrategy.makeStoreDefault();
-    }
+    let store = await this.getStore(userId);
 
     if(this.isExceedLimit(store)){
       throw new Error('Exceed Limit Configuarion Each File');
