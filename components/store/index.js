@@ -16,7 +16,6 @@ router.get('/', async function (req, res) {
     const payload = new Response('Configurations', matchedConfiguration);
     res.json(payload);
   } catch (e) {
-    console.log(e);
     const payload = new Response('Invalid Properties');
     res.status(400).json(payload);
   }
@@ -62,8 +61,7 @@ router.put('/', async function (req, res) {
     const payload = new Response('Configurations', updatedConfigurations);
     res.json(payload);
   } catch (e) {
-    console.log(e);
-    const payload = new Response('Can\'t Add Configurations');
+    const payload = new Response('Can\'t update Configurations');
     res.status(400).json(payload);
   }
 });
@@ -81,7 +79,7 @@ router.delete('/', async function (req, res) {
     const payload = new Response('Configurations', deletedConfigurations);
     res.json(payload);
   } catch (e) {
-    const payload = new Response('Can\'t Add Configurations');
+    const payload = new Response('Can\'t delete Configurations');
     res.status(400).json(payload);
   }
 });
