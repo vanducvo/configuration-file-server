@@ -1,6 +1,5 @@
 const Response = require('./response.js');
 describe('Reponse Class', () => {
-  const code = 200;
   const message = 'OK';
   const data = {id: 0};
 
@@ -11,49 +10,28 @@ describe('Reponse Class', () => {
   });
 
   it('should have constructor with code, message, data argument', () => {
-    const response = new Response(code, message, data);
+    const response = new Response(message, data);
 
     expect(response).toBeInstanceOf(Response);
   });
 
-  it('should have get code', () => {
-    const response = new Response(code, message, data);
-
-    expect(response.getCode()).toEqual(code);
-  });
-
-  it('should have get message', () => {
-    const response = new Response(code, message, data);
-
-    expect(response.getMessage()).toEqual(message);
-  });
-  
   it('should have get data', () => {
-    const response = new Response(code, message, data);
+    const response = new Response(message, data);
 
     expect(response.getData()).toEqual(data);
   });
   
   it('should have constructor with deep copy data', () => {
     const dynamicData = {...data};
-    const response = new Response(code, message, data);
+    const response = new Response(message, data);
 
     dynamicData.id = 2;
 
     expect(response.getData()).not.toEqual(dynamicData);
   });
 
-  it('should have set code', () => {
-    const response = new Response(code, message, data);
-
-    const newStatusCode = 400;
-    response.setCode(newStatusCode);
-
-    expect(response.getCode()).toEqual(newStatusCode);
-  });
-
   it('should have set message', () => {
-    const response = new Response(code, message, data);
+    const response = new Response(message, data);
 
     const newMessage = message + "new";
     response.setMessage(newMessage);

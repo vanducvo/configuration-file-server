@@ -3,7 +3,13 @@ const MySQLQueryFactory = require('./configuration-query-factory.js');
 describe('MYSQL Query Factory', () => {
 
   it('should be create instance with table name', () => {
-    const mySQLSQueryFactory = new MySQLQueryFactory('configuration', 'data');
+    const mySQLSQueryFactory = new MySQLQueryFactory(
+      'configuration',
+      {
+        jsonColName: 'data',
+        userIdColName: 'user_id'
+      }
+    );
 
     expect(mySQLSQueryFactory).toBeInstanceOf(MySQLQueryFactory);
   });
@@ -19,7 +25,7 @@ describe('MYSQL Query Factory', () => {
       );
 
       const properties = {
-        
+
       }
 
       const userId = 0;
@@ -137,7 +143,7 @@ describe('MYSQL Query Factory', () => {
       0
     ];
 
-    const { query, params} = mySQLSQueryFactory.insertConfiguration(properties, userId);
+    const { query, params } = mySQLSQueryFactory.insertConfiguration(properties, userId);
     expect(query).toEqual(expectQuery);
     expect(params).toEqual(expectParams);
   });
@@ -158,8 +164,8 @@ describe('MYSQL Query Factory', () => {
 
     const userId = 0;
 
-    const expectQuery = "DELETE FROM configuration WHERE " 
-    + "user_id = ? AND id = ? AND data->\"$.id\" = ?" ;
+    const expectQuery = "DELETE FROM configuration WHERE "
+      + "user_id = ? AND id = ? AND data->\"$.id\" = ?";
 
     const expectParams = [0, 10, 20];
 
@@ -168,7 +174,7 @@ describe('MYSQL Query Factory', () => {
     expect(params).toEqual(expectParams);
   });
 
-  it('can generate update configuration sql', () => {
+  it('can generate update configuration sql (update field)', () => {
     const mySQLSQueryFactory = new MySQLQueryFactory(
       'configuration',
       {
@@ -185,17 +191,45 @@ describe('MYSQL Query Factory', () => {
 
     const assignmentProperties = {
       name: 'Brew',
-      age: 30,
     };
 
-    const expectQuery = 'UPDATE configuration SET data = JSON_REPLACE(data, "$.name", ?, "$.age", ?) WHERE user_id = ? AND id = ?';
+    const expectQuery = 'UPDATE configuration SET data = JSON_SET(data, "$.name", CAST (? AS JSON)) WHERE user_id = ? AND id = ?';
 
 
-    const expectParams = ['Brew', 30, 0, 10];
+    const expectParams = ['"Brew"', userId, 10];
 
-    const { query, params } = mySQLSQueryFactory.updateConfiguration(assignmentProperties, conditionProperties, userId);
-    expect(query).toEqual(expectQuery);
-    expect(params).toEqual(expectParams);
+    const { queries, listOfParams } = mySQLSQueryFactory.updateConfiguration(assignmentProperties, conditionProperties, userId);
+    expect(queries[0]).toEqual(expectQuery);
+    expect(listOfParams[0]).toEqual(expectParams);
+  });
+
+  it('can generate update configuration sql (delete field)', () => {
+    const mySQLSQueryFactory = new MySQLQueryFactory(
+      'configuration',
+      {
+        configurationColName: 'data',
+        userIdColName: 'user_id',
+      }
+    );
+
+    const conditionProperties = {
+      _id: 10,
+    };
+
+    const userId = 0;
+
+    const assignmentProperties = {
+      name: undefined,
+    };
+
+    const expectQuery = 'UPDATE configuration SET data = JSON_REMOVE(data, "$.name") WHERE user_id = ? AND id = ?';
+
+
+    const expectParams = [0, 10];
+
+    const { queries, listOfParams } = mySQLSQueryFactory.updateConfiguration(assignmentProperties, conditionProperties, userId);
+    expect(queries[0]).toEqual(expectQuery);
+    expect(listOfParams[0]).toEqual(expectParams);
   });
 
   it('can generate count number configugration of each user', () => {
@@ -210,8 +244,8 @@ describe('MYSQL Query Factory', () => {
     const userId = 0;
 
     const expectQuery = 'SELECT COUNT(*) as count FROM configuration WHERE user_id = ?';
-    const expectParams = [userId];   
-    const {query, params} = mySQLSQueryFactory.countConfiguration(userId);
+    const expectParams = [userId];
+    const { query, params } = mySQLSQueryFactory.countConfiguration(userId);
 
     expect(query).toEqual(expectQuery);
     expect(params).toEqual(expectParams);

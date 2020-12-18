@@ -1,18 +1,24 @@
 const StoreService = require("./index.js");
-const { StoreTypes } = require("../enviroment");
+const { StoreTypes } = require("../../enviroment");
 const path = require('path');
 const { FileStrategy, MySQLStrategy } = require("../stategry/index.js");
+const MySQLPool = require("../../database/mysql/pool.js");
 
 describe('Test Strategy Store', () => {
   const OLD_ENV = process.env;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     jest.resetModules();
     process.env = { ...OLD_ENV };
+    await MySQLPool.close();
   });
 
   afterEach(() => {
     process.env = OLD_ENV;
+  });
+
+  afterAll(async ()=> {
+    await MySQLPool.close();
   });
 
   it('should be FILE strategy', () => {

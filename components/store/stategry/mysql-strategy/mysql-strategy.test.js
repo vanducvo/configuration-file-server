@@ -165,8 +165,8 @@ describe('MySQL Strategy', () => {
     await insertConfigurationForUser(configuration);
 
     const assignment = {
-      name: 'sudoers',
-      age: 18
+      another: 'sudoers',
+      age: undefined
     };
 
     const condition = {
@@ -179,8 +179,8 @@ describe('MySQL Strategy', () => {
 
     const checker = await mySQLStrategy.select({...condition, ...assignment});
     expect(updatedConfigurations).toHaveLength(1);
-    expect(checker[0].name).toEqual('sudoers');
-    expect(checker[0].age).toEqual(18);
+    expect(checker[0].another).toEqual('sudoers');
+    expect(checker[0].age).toBeUndefined();
   });
 
   it('should return [] of not match', async () => {

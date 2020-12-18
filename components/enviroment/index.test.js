@@ -78,10 +78,10 @@ describe('Enviroment Components', () => {
       expect(Enviroment.getMySQLURI()).toEqual(uri)
     });
 
-    it('should throw error when get MYSQL URI when type is not MYSQL', () => {
-      setEnviromentStoreType(StoreTypes.MONGODB);
+    it('can get JWT secret', () => {
+      process.env.JWT_SECRET  = 'ABC';
 
-      expect(() => Enviroment.getMySQLURI()).toThrowError()
+      expect(Enviroment.getJwtSecret()).toEqual('ABC');
     });
 
     it('can get MONGO URL CONNECTION', () => {

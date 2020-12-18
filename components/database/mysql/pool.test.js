@@ -1,9 +1,9 @@
-const { StoreTypes, Enviroment } = require('../../store/enviroment/index.js');
 const MySQLPool = require('./pool.js');
+const { Enviroment } = require('../../enviroment');
 
 describe('MySQL connection', () => {
-  const uri = null;
-  
+  const uri = Enviroment.getMySQLURI();
+
   afterAll(async () => {
     await MySQLPool.close();
   });
@@ -51,5 +51,11 @@ describe('MySQL connection', () => {
     await MySQLPool.close();
 
     await expect(MySQLPool.execute('SELECT 1', [])).rejects.toThrowError();
+  });
+
+  it('should throw error execute multi when disconnected', async () => {
+    await MySQLPool.close();
+
+    await expect(MySQLPool.executeMultiquery(['SELECT 1'], [[]])).rejects.toThrowError();
   });
 });
