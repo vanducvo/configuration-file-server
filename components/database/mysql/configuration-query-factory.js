@@ -75,17 +75,35 @@ class ConfigurationQueryFactory {
 
   updateConfiguration(assignmentProperties, conditionProperties, userId) {
     const sqlCondition = this._conditionToSQL(conditionProperties, userId);
-    const sqlAssignment = this._assignmentToSQL(assignmentProperties);
+    const sqlAssignmentUpdate = this._assignmentToSQLUpdate(assignmentProperties);
+    const sqlAssignmentRemove = this._assignmentToSQLRemove(assignmentProperties);
 
-    const query = `UPDATE ${this._tableName} SET `
-      + sqlAssignment.code
+    let queries = [];
+    let listOfParams = [];
+
+    if(sqlAssignmentUpdate.params.length > 0){
+      const queryUpdate = `UPDATE ${this._tableName} SET `
+        + sqlAssignmentUpdate.code
+        + ' WHERE ' + sqlCondition.code;
+      const paramsUpdate = [...sqlAssignmentUpdate.params, ...sqlCondition.params];
+      
+      queries.push(queryUpdate);
+      listOfParams.push(paramsUpdate);
+    }
+
+    if(sqlAssignmentRemove.hasRemove){
+      const queryRemove = `UPDATE ${this._tableName} SET `
+      + sqlAssignmentRemove.code
       + ' WHERE ' + sqlCondition.code;
-
-    const params = [...sqlAssignment.params, ...sqlCondition.params];
+      const paramsRemove = [...sqlCondition.params];
+      
+      queries.push(queryRemove);
+      listOfParams.push(paramsRemove);
+    }
 
     return {
-      query,
-      params
+      queries,
+      listOfParams
     };
   }
 
@@ -122,16 +140,34 @@ class ConfigurationQueryFactory {
     return { code, params };
   }
 
-  _assignmentToSQL(properties) {
-    let code = `${this._configurationColName} = JSON_REPLACE(${this._configurationColName}`;
+  _assignmentToSQLUpdate(properties) {
+    let code = `${this._configurationColName} = JSON_SET(${this._configurationColName}`;
     let params = [];
-    for (let propertyName in properties) {
-      code += `, "$.${propertyName}", ?`;
-      params.push(properties[propertyName]);
+
+    for (const name in properties) {
+      if (properties[name] !== undefined) {
+        code += `, "$.${name}", CAST (? AS JSON)`;
+        params.push(JSON.stringify(properties[name]));
+      }
     }
 
     code += ')';
     return { code, params };
+  }
+
+  _assignmentToSQLRemove(properties) {
+    let code = `${this._configurationColName} = JSON_REMOVE(${this._configurationColName}`;
+
+    let hasRemove = false;
+    for (const name in properties) {
+      if (properties[name] === undefined) {
+        hasRemove = true;
+        code += `, "$.${name}"`;
+      }
+    }
+    code += ')';
+
+    return { code, hasRemove };
   }
 }
 

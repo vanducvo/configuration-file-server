@@ -124,9 +124,13 @@ class FileStrategy extends StrategyStore {
   async getStore(userId) {
     const filename = FileStrategy.getFileName(userId);
     const filePath = this.getFilePath(filename);
-    const buffer = await readFile(filePath);
 
-    const configurations = FileStrategy.decode(buffer);
+    let configurations = FileStrategy.makeStoreDefault();
+    if(fs.existsSync(filePath)){
+      const buffer = await readFile(filePath);
+
+      configurations = FileStrategy.decode(buffer);
+    }
 
     return configurations;
   }
@@ -157,12 +161,7 @@ class FileStrategy extends StrategyStore {
   async insert(_configuration) {
     const configuration = new Configuration(_configuration);
     const userId = configuration.getUserId();
-    let store = null;
-    if (this.wasExistedStore(userId)) {
-      store = await this.getStore(userId);
-    } else {
-      store = FileStrategy.makeStoreDefault();
-    }
+    let store = await this.getStore(userId);
 
     if(this.isExceedLimit(store)){
       throw new Error('Exceed Limit Configuarion Each File');

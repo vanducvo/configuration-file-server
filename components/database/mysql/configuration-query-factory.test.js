@@ -174,7 +174,7 @@ describe('MYSQL Query Factory', () => {
     expect(params).toEqual(expectParams);
   });
 
-  it('can generate update configuration sql', () => {
+  it('can generate update configuration sql (update field)', () => {
     const mySQLSQueryFactory = new MySQLQueryFactory(
       'configuration',
       {
@@ -191,17 +191,45 @@ describe('MYSQL Query Factory', () => {
 
     const assignmentProperties = {
       name: 'Brew',
-      age: 30,
     };
 
-    const expectQuery = 'UPDATE configuration SET data = JSON_REPLACE(data, "$.name", ?, "$.age", ?) WHERE user_id = ? AND id = ?';
+    const expectQuery = 'UPDATE configuration SET data = JSON_SET(data, "$.name", CAST (? AS JSON)) WHERE user_id = ? AND id = ?';
 
 
-    const expectParams = ['Brew', 30, 0, 10];
+    const expectParams = ['"Brew"', userId, 10];
 
-    const { query, params } = mySQLSQueryFactory.updateConfiguration(assignmentProperties, conditionProperties, userId);
-    expect(query).toEqual(expectQuery);
-    expect(params).toEqual(expectParams);
+    const { queries, listOfParams } = mySQLSQueryFactory.updateConfiguration(assignmentProperties, conditionProperties, userId);
+    expect(queries[0]).toEqual(expectQuery);
+    expect(listOfParams[0]).toEqual(expectParams);
+  });
+
+  it('can generate update configuration sql (delete field)', () => {
+    const mySQLSQueryFactory = new MySQLQueryFactory(
+      'configuration',
+      {
+        configurationColName: 'data',
+        userIdColName: 'user_id',
+      }
+    );
+
+    const conditionProperties = {
+      _id: 10,
+    };
+
+    const userId = 0;
+
+    const assignmentProperties = {
+      name: undefined,
+    };
+
+    const expectQuery = 'UPDATE configuration SET data = JSON_REMOVE(data, "$.name") WHERE user_id = ? AND id = ?';
+
+
+    const expectParams = [0, 10];
+
+    const { queries, listOfParams } = mySQLSQueryFactory.updateConfiguration(assignmentProperties, conditionProperties, userId);
+    expect(queries[0]).toEqual(expectQuery);
+    expect(listOfParams[0]).toEqual(expectParams);
   });
 
   it('can generate count number configugration of each user', () => {

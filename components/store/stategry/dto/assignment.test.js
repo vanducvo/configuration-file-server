@@ -66,25 +66,6 @@ describe('Change Class', () => {
     }
   });
 
-  it('should throw when property update not in context', () => {
-    const context = {
-      user: 'brew',
-      age: 20
-    };
-    const properties = {
-      getMarried: false
-    };
-    const assignment = new Assignment(
-      properties
-    );
-
-
-    const message = Assignment.name + ': context not have getMarried property!'
-    expect(() => {
-      assignment.apply(context);
-    }).toThrowError(message);
-  });
-
   it('can get properties', () => {
     const properties = {
       getMarried: false
