@@ -194,10 +194,10 @@ describe('MYSQL Query Factory', () => {
       age: 30,
     };
 
-    const expectQuery = 'UPDATE configuration SET data = JSON_REPLACE(data, "$.name", ?, "$.age", ?) WHERE user_id = ? AND id = ?';
+    const expectQuery = 'UPDATE configuration SET data = JSON_MERGE_PATCH(data, ?) WHERE user_id = ? AND id = ?';
 
 
-    const expectParams = ['Brew', 30, 0, 10];
+    const expectParams = [JSON.stringify(assignmentProperties), userId, 10];
 
     const { query, params } = mySQLSQueryFactory.updateConfiguration(assignmentProperties, conditionProperties, userId);
     expect(query).toEqual(expectQuery);

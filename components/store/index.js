@@ -46,12 +46,19 @@ router.put('/', async function (req, res) {
       throw new Error('Empty Configuration');
     }
 
+    req.body.assignment = req.body.assignment || {};
+
     // _userId in after ...req.body for security
     const condition = {...req.body.condition,  _userId: req.user.id};
     const assignment = req.body.assignment;
 
-    const updatedConfigurations = await storeService.update(assignment, condition);
+    if(req.body.delete && req.body.delete.constructor.name == 'Array'){
+      for(const property of req.body.delete){
+        assignment[property] = undefined;
+      }
+    }
 
+    const updatedConfigurations = await storeService.update(assignment, condition);
     const payload = new Response('Configurations', updatedConfigurations);
     res.json(payload);
   } catch (e) {

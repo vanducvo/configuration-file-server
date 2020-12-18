@@ -17,7 +17,7 @@ class Assignment {
   }
 
   static isObject(properties) {
-    return properties 
+    return properties
       && typeof (properties) === 'object'
       && properties.constructor.name === 'Object'
       && Object.keys(properties).length > 0;
@@ -28,31 +28,26 @@ class Assignment {
   }
 
   apply(_context) {
-    if(!Assignment.isObject(_context)){
+    if (!Assignment.isObject(_context)) {
       const message = this.getClassName() +
-      ':apply context must be object';
+        ':apply context must be object';
       throw new Error(message)
     }
 
     const context = Assignment.deepClone(_context);
 
-    for(let propertyName in this._properties){
-      if(propertyName in context){
-        if(this._properties[propertyName] === undefined){
-          delete context[propertyName];
-        }else{
-          context[propertyName] = this._properties[propertyName];
-        }
-        
+    for (let propertyName in this._properties) {
+      if (this._properties[propertyName] === undefined) {
+        delete context[propertyName];
       } else {
-        throw new Error(`${this.getClassName()}: context not have ${propertyName} property!`)
+        context[propertyName] = this._properties[propertyName];
       }
     }
-    
+
     return context;
   }
 
-  getProperties(){
+  getProperties() {
     return Assignment.deepClone(this._properties);
   }
 

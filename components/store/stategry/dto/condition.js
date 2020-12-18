@@ -11,8 +11,16 @@ class Condition {
     }
 
     const {_userId, ..._properties} = properties;
+    this._properties = {};
+    
+    for(const key in _properties){
+      if(Condition.isObject(_properties[key]) || _properties[key] == undefined){
+        continue;
+      }
 
-    this._properties = _properties;
+      this._properties[key] = _properties[key];
+    }
+    
     this._userId = _userId;
   }
 

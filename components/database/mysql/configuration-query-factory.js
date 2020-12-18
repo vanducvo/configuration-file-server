@@ -75,17 +75,32 @@ class ConfigurationQueryFactory {
 
   updateConfiguration(assignmentProperties, conditionProperties, userId) {
     const sqlCondition = this._conditionToSQL(conditionProperties, userId);
-    const sqlAssignment = this._assignmentToSQL(assignmentProperties);
+    const sqlAssignmentUpdate = this._assignmentToSQLUpdate(assignmentProperties);
+    const sqlAssignmentRemove = this._assignmentToSQLRemove(assignmentProperties);
 
-    const query = `UPDATE ${this._tableName} SET `
-      + sqlAssignment.code
+
+
+    const queryUpdate = `UPDATE ${this._tableName} SET `
+      + sqlAssignmentUpdate.code
       + ' WHERE ' + sqlCondition.code;
+    const paramsRemove = [...sqlAssignmentUpdate.params, ...sqlCondition.params];
 
-    const params = [...sqlAssignment.params, ...sqlCondition.params];
+    let queries = [queryUpdate];
+    let listOfParams = [paramsRemove];
+
+    if(sqlAssignmentRemove){
+      const queryRemove = `UPDATE ${this._tableName} SET `
+      + sqlAssignmentRemove.code
+      + ' WHERE ' + sqlCondition.code;
+      const paramsRemove = [...sqlAssignmentRemove.params, ...sqlCondition.params];
+      
+      queries.push(queryRemove);
+      listOfParams.push(paramsRemove);
+    }
 
     return {
-      query,
-      params
+      queries,
+      listOfParams
     };
   }
 
@@ -122,16 +137,30 @@ class ConfigurationQueryFactory {
     return { code, params };
   }
 
-  _assignmentToSQL(properties) {
-    let code = `${this._configurationColName} = JSON_REPLACE(${this._configurationColName}`;
-    let params = [];
-    for (let propertyName in properties) {
-      code += `, "$.${propertyName}", ?`;
-      params.push(properties[propertyName]);
-    }
-
-    code += ')';
+  _assignmentToSQLUpdate(properties) {
+    let code = `${this._configurationColName} = JSON_MERGE_PATCH(${this._configurationColName}, ?)`;
+    let params = [JSON.stringify(properties)];
     return { code, params };
+  }
+
+  _assignmentToSQLRemove(properties) {
+    let code = `${this._configurationColName} = JSON_REMOVE(${this._configurationColName}`;
+
+    let hasRemove = false;
+    for (const name in properties) {
+      if (properties[name] == undefined) {
+        hasRemove = true;
+        code += `, "$.${name}"`;
+      }
+    }
+    code += ')';
+
+    let params = [];
+
+    if (hasRemove) {
+      return { code, params };
+    }
+    return null;
   }
 }
 
