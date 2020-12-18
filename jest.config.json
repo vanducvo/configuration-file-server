@@ -1,5 +1,9 @@
 {
     "verbose": true,
     "collectCoverage": true,
-    "setupFiles": ["./test.setup.js"]
+    "setupFiles": [
+        "./test.setup.js"
+    ],
+    "preset": "@shelf/jest-mongodb",
+    "testEnvironment": "node"
 }
