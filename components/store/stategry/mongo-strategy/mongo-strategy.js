@@ -21,16 +21,11 @@ class MongoStrategy {
   }
 
   static generateStageSelect(condition) {
-    const query = { user_id: condition.getUserId() };
-    const properties = condition.getProperties();
-
-    for (const key in properties) {
-      query[`data.${key}`] = properties[key];
-    }
+    const expression = MongoStrategy.conditionToMongoExpression(condition);
 
     const actions = [
       {
-        $match: query,
+        $match: expression,
       },
       {
         $addFields: {
@@ -50,6 +45,16 @@ class MongoStrategy {
     return actions;
   }
 
+  static conditionToMongoExpression(condition) {
+    const query = { user_id: condition.getUserId() };
+    const properties = condition.getProperties();
+
+    for (const key in properties) {
+      query[`data.${key}`] = properties[key];
+    }
+    return query;
+  }
+
   static getIdFromResponse(response) {
     return response._doc._id.toString();
   }
@@ -66,8 +71,6 @@ class MongoStrategy {
     return MongoStrategy.getIdFromResponse(response);
   }
 
-
-
   async select(_condition) {
     const condition = new Condition(_condition);
 
@@ -77,6 +80,41 @@ class MongoStrategy {
     const configurations = ConfigurationModel.aggregate(stages);
 
     return configurations;
+  }
+
+  async delete(_condition){
+    const condition = new Condition(_condition);
+
+    const expression = MongoStrategy.conditionToMongoExpression(condition);
+
+    const result = this.select(_condition);
+    await ConfigurationModel.deleteMany(expression);
+
+    return result;
+  }
+
+  async update(_assignment, _condition){
+    const condition = new Condition(_condition);
+    const assignment = new Assignment(_assignment);
+
+    const expressionCondition = MongoStrategy.conditionToMongoExpression(condition);
+    const expressionAssignment = MongoStrategy.assignmentToMongoExpression(assignment);
+
+    
+    await ConfigurationModel.updateMany(expressionCondition, expressionAssignment);
+    const result = await this.select({..._condition, ..._assignment});
+    
+    return result;
+  }
+
+  static assignmentToMongoExpression(assignment){
+    const expression = {};
+    const properties = assignment.getProperties();
+
+    for (const key in properties) {
+      expression[`data.${key}`] = properties[key];
+    }
+    return expression;
   }
 }
 
