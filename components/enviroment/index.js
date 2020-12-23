@@ -64,6 +64,17 @@ class Enviroment {
   static getMySQLURI() {
     return process.env.MYSQL_URI;
   }
+
+  static getMongoDBURI(){
+    if (process.env.STORE_TYPE === StoreTypes.MONGODB) {
+      return process.env.MONGODB_URI;
+    }
+
+    const message = `Enviroment is using Storage Type: 
+                    "${process.env.STORE_TYPE}", not "mongodb"`;
+
+    throw new Error(message);
+  }
 }
 
 module.exports = {

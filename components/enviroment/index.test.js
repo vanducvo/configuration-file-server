@@ -83,6 +83,20 @@ describe('Enviroment Components', () => {
 
       expect(Enviroment.getJwtSecret()).toEqual('ABC');
     });
+
+    it('can get MONGO URL CONNECTION', () => {
+      setEnviromentStoreType(StoreTypes.MONGODB)
+      const uri = 'mongodb://localhost:27019/';
+      process.env.MONGODB_URI = uri;
+
+      expect(Enviroment.getMongoDBURI()).toEqual(uri)
+    });
+
+    it('should throw error if Store type no equal Mongo when get MONGODB URI', () => {
+      setEnviromentStoreType(StoreTypes.MYSQL);
+
+      expect(() => Enviroment.getMongoDBURI()).toThrowError()
+    });
 });
 
 function setEnviromentMySQLURI(uri) {
