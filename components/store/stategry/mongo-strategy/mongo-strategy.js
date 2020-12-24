@@ -116,10 +116,11 @@ class MongoStrategy {
     const properties = assignment.getProperties();
 
     for (const key in properties) {
+      const property = `data.${key}`;
       if (properties[key] === undefined) {
-        unset[`data.${key}`] = 1 ;
+        unset[property] = 1 ;
       } else {
-        set[`data.${key}`] = properties[key];
+        set[property] = properties[key];
       }
 
     }
