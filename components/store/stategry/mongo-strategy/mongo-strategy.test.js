@@ -1,6 +1,5 @@
 const MongoStrategy = require('./mongo-strategy');
 const mongoose = require('mongoose');
-const Condition = require('../dto/condition');
 
 const UserId = {
   INSERT: 0,

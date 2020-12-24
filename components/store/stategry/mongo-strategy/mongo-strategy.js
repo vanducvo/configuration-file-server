@@ -50,8 +50,13 @@ class MongoStrategy {
     const properties = condition.getProperties();
 
     for (const key in properties) {
-      query[`data.${key}`] = properties[key];
+      if(key !== '_id'){
+        query[`data.${key}`] = properties[key];
+      }else{
+        query['_id'] = mongoose.Types.ObjectId(properties[key]);
+      }
     }
+    
     return query;
   }
 
@@ -100,7 +105,7 @@ class MongoStrategy {
     const expressionCondition = MongoStrategy.conditionToMongoExpression(condition);
     const { set, unset } = MongoStrategy.assignmentToMongoExpression(assignment);
 
-    const a = await ConfigurationModel.update(expressionCondition, {
+    const a = await ConfigurationModel.updateMany(expressionCondition, {
       $set: set,
       $unset: unset
     });
