@@ -1,0 +1,24 @@
+version: "3"
+services:
+  configuration-server:
+    build: .
+    ports:
+      - 5000:${PORT}
+    depends_on:
+      - mysql-db
+      - mongo-db
+    env_file:
+      - ./docker/.env.${ENV}
+
+  mysql-db:
+    image: mysql
+    env_file:
+      - ./docker/.env.${ENV}
+    volumes:
+      - ./docker/mysql/main.sql:/docker-entrypoint-initdb.d/main.sql
+
+  mongo-db:
+    image: mongo
+    restart: always
+    env_file:
+      - ./docker/.env.${ENV}
