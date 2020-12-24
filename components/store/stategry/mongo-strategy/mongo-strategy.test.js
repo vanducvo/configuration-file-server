@@ -9,10 +9,10 @@ const UserId = {
 }
 
 describe('Mongo Strategy', () => {
-  const uri = 'mongodb://127.0.0.1:27017/configuration_test';
+  const uri = process.env.MONGODB_URI;
 
   beforeAll(async () => {
-    
+
     await mongoose.connect(uri, {
       useNewUrlParser: true,
       useUnifiedTopology: true
@@ -23,11 +23,11 @@ describe('Mongo Strategy', () => {
     await mongoose.disconnect();
   });
 
-  beforeEach( async () => {
+  beforeEach(async () => {
     await mongoose.disconnect();
   });
 
-  afterAll( async () => {
+  afterAll(async () => {
     await mongoose.disconnect();
   });
 
@@ -63,7 +63,7 @@ describe('Mongo Strategy', () => {
           another: 31
         }
       };
-      
+
       await mongoStrategy.insert(configuration1);
       await mongoStrategy.insert(configuration2);
 
@@ -73,6 +73,94 @@ describe('Mongo Strategy', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]._id).toHaveLength(24);
+    });
+  });
+
+  describe('Delete Method', () => {
+    it('can delete configuration', async () => {
+      const mongoStrategy = new MongoStrategy(uri);
+      const configuration = {
+        _userId: UserId.DELETE,
+        name: 'Amazing',
+        a: 10
+      };
+
+      const condition = {
+        _userId: UserId.DELETE,
+        a: 10
+      };
+
+      await mongoStrategy.insert(configuration);
+
+      const result = await mongoStrategy.delete(condition);
+      const deleted = await mongoStrategy.select(condition);
+
+      expect(result).toHaveLength(1);
+
+      
+      expect(deleted).toHaveLength(0);
+    });
+  });
+
+  describe('Update Method', () => {
+    it('can update configuration', async () => {
+      const mongoStrategy = new MongoStrategy(uri);
+      const configuration = {
+        _userId: UserId.UDPATE,
+        name: {
+          firstname: 'ABC'
+        },
+        a: 10
+      };
+
+      const condition = {
+        _userId: UserId.UDPATE,
+        a: 10
+      };
+
+      const assignment = {
+        name: {
+          lastname: 'Amazing'
+        }
+      };
+
+      await mongoStrategy.insert(configuration);
+
+      const result = await mongoStrategy.update(assignment, condition);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toEqual({
+        lastname: 'Amazing'
+      });
+    });
+
+
+    it('can update delete field configuration', async () => {
+      const mongoStrategy = new MongoStrategy(uri);
+      const time = Date().toString();
+      const configuration = {
+        _userId: UserId.UDPATE,
+        name: {
+          firstname: 'ABC'
+        },
+        a: time
+      };
+
+      const condition = {
+        _userId: UserId.UDPATE,
+        a: time
+      };
+
+      const assignment = {
+        name: undefined
+      };
+
+      await mongoStrategy.insert(configuration);
+
+      const result = await mongoStrategy.update(assignment, condition);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBeUndefined();
     });
   });
 });

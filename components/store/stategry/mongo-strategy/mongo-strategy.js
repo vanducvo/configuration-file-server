@@ -21,16 +21,11 @@ class MongoStrategy {
   }
 
   static generateStageSelect(condition) {
-    const query = { user_id: condition.getUserId() };
-    const properties = condition.getProperties();
-
-    for (const key in properties) {
-      query[`data.${key}`] = properties[key];
-    }
+    const expression = MongoStrategy.conditionToMongoExpression(condition);
 
     const actions = [
       {
-        $match: query,
+        $match: expression,
       },
       {
         $addFields: {
@@ -50,6 +45,21 @@ class MongoStrategy {
     return actions;
   }
 
+  static conditionToMongoExpression(condition) {
+    const query = { user_id: condition.getUserId() };
+    const properties = condition.getProperties();
+
+    for (const key in properties) {
+      if(key !== '_id'){
+        query[`data.${key}`] = properties[key];
+      }else{
+        query['_id'] = mongoose.Types.ObjectId(properties[key]);
+      }
+    }
+    
+    return query;
+  }
+
   static getIdFromResponse(response) {
     return response._doc._id.toString();
   }
@@ -66,17 +76,60 @@ class MongoStrategy {
     return MongoStrategy.getIdFromResponse(response);
   }
 
-
-
   async select(_condition) {
     const condition = new Condition(_condition);
 
     const stages = MongoStrategy.generateStageSelect(condition);
-    
+
     await this._pool;
     const configurations = ConfigurationModel.aggregate(stages);
 
     return configurations;
+  }
+
+  async delete(_condition) {
+    const condition = new Condition(_condition);
+
+    const expression = MongoStrategy.conditionToMongoExpression(condition);
+
+    const result = this.select(_condition);
+    await ConfigurationModel.deleteMany(expression);
+
+    return result;
+  }
+
+  async update(_assignment, _condition) {
+    const condition = new Condition(_condition);
+    const assignment = new Assignment(_assignment);
+
+    const expressionCondition = MongoStrategy.conditionToMongoExpression(condition);
+    const { set, unset } = MongoStrategy.assignmentToMongoExpression(assignment);
+
+    const a = await ConfigurationModel.updateMany(expressionCondition, {
+      $set: set,
+      $unset: unset
+    });
+
+    const result = await this.select({ ..._condition, ..._assignment });
+
+    return result;
+  }
+
+  static assignmentToMongoExpression(assignment) {
+    const set = {};
+    let unset = {};
+    const properties = assignment.getProperties();
+
+    for (const key in properties) {
+      const property = `data.${key}`;
+      if (properties[key] === undefined) {
+        unset[property] = 1 ;
+      } else {
+        set[property] = properties[key];
+      }
+
+    }
+    return { set, unset };
   }
 }
 

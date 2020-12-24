@@ -1,5 +1,6 @@
 const { StoreTypes, Enviroment } = require('../../enviroment');
 const { FileStrategy, MySQLStrategy } = require('../stategry');
+const MongoStrategy = require('../stategry/mongo-strategy/mongo-strategy');
 
 class StoreService {
   constructor() {
@@ -13,6 +14,10 @@ class StoreService {
       case StoreTypes.MYSQL:
         const mysqluri = Enviroment.getMySQLURI();
         this.strategy = new MySQLStrategy(mysqluri);
+        break;
+      case StoreTypes.MONGODB:
+        const mongouri = Enviroment.getMongoDBURI();
+        this.strategy = new MongoStrategy(mongouri);
         break;
       default:
         throw Error('No Support Storerage Style');
