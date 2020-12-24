@@ -75,14 +75,14 @@ class MongoStrategy {
     const condition = new Condition(_condition);
 
     const stages = MongoStrategy.generateStageSelect(condition);
-    
+
     await this._pool;
     const configurations = ConfigurationModel.aggregate(stages);
 
     return configurations;
   }
 
-  async delete(_condition){
+  async delete(_condition) {
     const condition = new Condition(_condition);
 
     const expression = MongoStrategy.conditionToMongoExpression(condition);
@@ -93,28 +93,37 @@ class MongoStrategy {
     return result;
   }
 
-  async update(_assignment, _condition){
+  async update(_assignment, _condition) {
     const condition = new Condition(_condition);
     const assignment = new Assignment(_assignment);
 
     const expressionCondition = MongoStrategy.conditionToMongoExpression(condition);
-    const expressionAssignment = MongoStrategy.assignmentToMongoExpression(assignment);
+    const { set, unset } = MongoStrategy.assignmentToMongoExpression(assignment);
 
-    
-    await ConfigurationModel.updateMany(expressionCondition, expressionAssignment);
-    const result = await this.select({..._condition, ..._assignment});
-    
+    const a = await ConfigurationModel.update(expressionCondition, {
+      $set: set,
+      $unset: unset
+    });
+
+    const result = await this.select({ ..._condition, ..._assignment });
+
     return result;
   }
 
-  static assignmentToMongoExpression(assignment){
-    const expression = {};
+  static assignmentToMongoExpression(assignment) {
+    const set = {};
+    let unset = {};
     const properties = assignment.getProperties();
 
     for (const key in properties) {
-      expression[`data.${key}`] = properties[key];
+      if (properties[key] === undefined) {
+        unset[`data.${key}`] = 1 ;
+      } else {
+        set[`data.${key}`] = properties[key];
+      }
+
     }
-    return expression;
+    return { set, unset };
   }
 }
 

@@ -134,5 +134,34 @@ describe('Mongo Strategy', () => {
         lastname: 'Amazing'
       });
     });
+
+
+    it('can update delete field configuration', async () => {
+      const mongoStrategy = new MongoStrategy(uri);
+      const time = Date().toString();
+      const configuration = {
+        _userId: UserId.UDPATE,
+        name: {
+          firstname: 'ABC'
+        },
+        a: time
+      };
+
+      const condition = {
+        _userId: UserId.UDPATE,
+        a: time
+      };
+
+      const assignment = {
+        name: undefined
+      };
+
+      await mongoStrategy.insert(configuration);
+
+      const result = await mongoStrategy.update(assignment, condition);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBeUndefined();
+    });
   });
 });
