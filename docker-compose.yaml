@@ -8,12 +8,12 @@ services:
       - mysql-db
       - mongo-db
     env_file:
-      - ./docker/.env.${ENV}
+      - ./docker/docker.env.${ENV}
 
   mysql-db:
     image: mysql
     env_file:
-      - ./docker/.env.${ENV}
+      - ./docker/docker.env.${ENV}
     volumes:
       - ./docker/mysql/main.sql:/docker-entrypoint-initdb.d/main.sql
 
@@ -21,4 +21,4 @@ services:
     image: mongo
     restart: always
     env_file:
-      - ./docker/.env.${ENV}
+      - ./docker/docker.env.${ENV}
