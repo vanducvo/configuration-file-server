@@ -117,3 +117,4 @@ dist
 .pnp.*
 
 file-db
+.env.*

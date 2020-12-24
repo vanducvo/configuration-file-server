@@ -1,0 +1,18 @@
+CREATE TABLE user
+(
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    username NVARCHAR(50) NOT NULL UNIQUE,
+    password NVARCHAR(100) NOT NULL
+);
+
+
+CREATE TABLE configuration (
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    data JSON,
+    user_id INT NOT NULL,
+    FOREIGN KEY 
+		(user_id) 
+    REFERENCES user(id) 
+    ON UPDATE CASCADE 
+    ON DELETE RESTRICT
+);

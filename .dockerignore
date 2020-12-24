@@ -1,0 +1,5 @@
+coverage
+file-db
+node_modules
+globalConfig.json
+.env*
